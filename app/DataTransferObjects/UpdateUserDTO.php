@@ -1,6 +1,8 @@
 <?php
 
-namespace App\DTO;
+namespace App\DataTransferObjects;
+
+use App\Http\Requests\Auth\UpdateProfileRequest;
 
 class UpdateUserDTO
 {
@@ -13,7 +15,7 @@ class UpdateUserDTO
     ) {
     }
 
-    public static function fromAppRequest(\Illuminate\Http\Request $request): self
+    public static function fromAppRequest(UpdateProfileRequest $request): self
     {
         return new self(
             name: $request->name,

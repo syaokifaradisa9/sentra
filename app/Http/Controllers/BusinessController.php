@@ -6,7 +6,7 @@ use Exception;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Business;
-use App\DTOs\BusinessDTO;
+use App\DataTransferObjects\BusinessDTO;
 use App\Services\BusinessService;
 use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\BusinessRequest;
@@ -38,8 +38,7 @@ class BusinessController extends Controller
 
             return to_route('businesses.index')->with('message', 'Bisnis berhasil dibuat');
         } catch (Exception $e) {
-            return back()
-                ->with('error', 'Gagal membuat bisnis');
+            return back()->with('error', 'Gagal membuat bisnis');
         }
     }
 
@@ -82,8 +81,7 @@ class BusinessController extends Controller
                 return back()->with('error', 'Gagal menghapus bisnis');
             }
         } catch (Exception $e) {
-            return back()
-                ->with('error', 'Gagal menghapus bisnis');
+            return back()->with('error', 'Gagal menghapus bisnis');
         }
     }
 }

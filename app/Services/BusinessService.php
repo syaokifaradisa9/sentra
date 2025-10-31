@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\Business\BusinessRepository;
 use App\Models\Business;
-use App\DTOs\BusinessDTO;
+use App\DataTransferObjects\BusinessDTO;
 
 class BusinessService
 {

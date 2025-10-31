@@ -9,18 +9,10 @@ class Category extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
     ];
 
-    /**
-     * Get the branches that belong to this category.
-     */
     public function branches()
     {
         return $this->belongsToMany(Branch::class, 'category_branches');

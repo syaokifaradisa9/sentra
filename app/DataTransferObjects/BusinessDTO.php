@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTOs;
+namespace App\DataTransferObjects;
 
 use App\Http\Requests\BusinessRequest;
 use Illuminate\Support\Facades\Auth;
@@ -8,24 +8,24 @@ use Illuminate\Support\Facades\Auth;
 class BusinessDTO
 {
     public function __construct(
-        public int $user_id,
+        public int $userId,
         public string $name,
         public string $description
     ) {}
 
-    public static function fromAppRequest(BusinessRequest $data): self
+    public static function fromAppRequest(BusinessRequest $request): self
     {
         return new self(
-            user_id: $data['user_id'] ?? Auth::user()->id, // Get authenticated user ID directly
-            name: $data['name'],
-            description: $data['description']
+            userId: $request->user_id ?? Auth::user()->id,
+            name: $request->name,
+            description: $request->description
         );
     }
 
     public function toArray(): array
     {
         return [
-            'user_id' => $this->user_id,
+            'user_id' => $this->userId,
             'name' => $this->name,
             'description' => $this->description,
         ];
