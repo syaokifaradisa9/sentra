@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 
-export default function FormTextArea({
+function FormTextareaComponent({
     name,
     label,
     value,
@@ -10,24 +10,14 @@ export default function FormTextArea({
     readonly = false,
     required = false,
     disabled = false,
+    autoFocus = false,
     helpText,
-    rows = 4,
-    maxLength,
     className = "",
-}) {
+    rows = 3,
+    cols,
+}, forwardedRef) {
     const [isFocused, setIsFocused] = useState(false);
-    const characterCount = value?.length || 0;
-
-    const baseStyles = `
-        w-full px-4 py-3 text-sm rounded-lg transition-all duration-200 outline-none
-        ${disabled ? "opacity-60 cursor-not-allowed" : ""}
-        ${
-            readonly
-                ? "cursor-not-allowed bg-gray-50 dark:bg-slate-800/40"
-                : "bg-white dark:bg-slate-800/40"
-        }
-    `;
-
+    
     const getBorderStyles = () => {
         if (error) {
             return "border-red-500/40 dark:border-red-500/40";
@@ -68,17 +58,6 @@ export default function FormTextArea({
                         </span>
                     )}
                 </label>
-                {maxLength && (
-                    <span
-                        className={`text-xs ${
-                            characterCount > maxLength * 0.9
-                                ? "text-amber-500"
-                                : "text-gray-500 dark:text-slate-400"
-                        }`}
-                    >
-                        {characterCount}/{maxLength}
-                    </span>
-                )}
             </div>
         );
     };
@@ -87,7 +66,7 @@ export default function FormTextArea({
         if (!helpText || error) return null;
 
         return (
-            <p className="text-sm text-gray-500 dark:text-slate-400/80">
+            <p className="text-sm text-gray-700 dark:text-slate-300/80">
                 {helpText}
             </p>
         );
@@ -97,12 +76,12 @@ export default function FormTextArea({
         if (!error) return null;
 
         return (
-            <div className="flex items-center gap-1.5">
+            <div className="flex gap-1.5 items-center">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
-                    className="size-4 text-red-500/70 dark:text-red-400/70"
+                    className="text-red-500/70 dark:text-red-400/70 size-4"
                 >
                     <path
                         fillRule="evenodd"
@@ -120,8 +99,9 @@ export default function FormTextArea({
     return (
         <div className={`space-y-1.5 ${className}`}>
             {renderLabel()}
-            <div className="relative">
+            <div className="relative w-full">
                 <textarea
+                    ref={forwardedRef}
                     id={name}
                     name={name}
                     value={value}
@@ -129,16 +109,23 @@ export default function FormTextArea({
                     disabled={disabled}
                     readOnly={readonly}
                     required={required}
-                    rows={rows}
-                    maxLength={maxLength}
                     placeholder={placeholder}
+                    autoFocus={autoFocus}
+                    rows={rows}
+                    cols={cols}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     className={`
-                        ${baseStyles} ${getBorderStyles()} ${getFocusRingStyles()}
-                        border focus:ring-2 text-gray-900 dark:text-slate-200
-                        placeholder:text-gray-400 dark:placeholder:text-slate-400/60
-                        resize-y
+                        w-full h-auto transition-all duration-200 outline-none flex-1
+                        ${disabled ? "opacity-60 cursor-not-allowed" : ""}
+                        ${
+                            readonly
+                                ? "cursor-not-allowed bg-gray-50 dark:bg-slate-800/40"
+                                : "bg-white dark:bg-slate-800/40"
+                        }
+                        ${getFocusRingStyles()} px-4 py-3 rounded-lg border ${getBorderStyles()}
+                        text-gray-900 dark:text-slate-200 placeholder:text-gray-400
+                        dark:placeholder:text-slate-400 focus:ring-2
                     `}
                 />
             </div>
@@ -147,3 +134,5 @@ export default function FormTextArea({
         </div>
     );
 }
+
+export default forwardRef(FormTextareaComponent);

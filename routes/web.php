@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 
 // Redirect root to login
 Route::redirect("/", "/auth/login");
@@ -19,7 +20,16 @@ Route::post('/logout', function () {
     return redirect('/auth/login');
 })->name('logout');
 
-// Dashboard route - requires authentication
-Route::get('/dashboard', function () {
-    return inertia('Dashboard');
-})->name('dashboard')->middleware('auth');
+// Dashboard route
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
+
+// Authenticated routes with auth prefix - using AuthController group
+Route::prefix('auth')->middleware('auth')->controller(AuthController::class)->group(function () {
+    // Profile routes
+    Route::get('/profile', 'changeProfile')->name('profile');
+    Route::put('/update-profile', 'updateProfile')->name('update-profile');
+    
+    // Password routes
+    Route::get('/password', 'changePassword')->name('password');
+    Route::put('/update-password', 'updatePassword')->name('update-password');
+});

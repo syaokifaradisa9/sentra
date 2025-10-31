@@ -2,9 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Auth;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -36,16 +37,23 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        $loggedUser = Auth::user();
+        $roles = [];
+        if($loggedUser){
+            $roles = $loggedUser->getRoleNames();
+        }
 
-        return [
-            ...parent::share($request),
-            'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
-                'user' => $request->user(),
-            ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-        ];
+        $successMessage = $request->session()->pull('success');
+        $errorMessage = $request->session()->pull('error');
+
+        return array_merge(parent::share($request), [
+            'csrf_token' => csrf_token(),
+            'loggeduser' => $loggedUser,
+            'loggedrole' => $roles,
+            'flash' => [
+                'message' => $successMessage ?? $errorMessage ?? null,
+                'type' => $successMessage ? 'success' : ($errorMessage ? 'error' : null),
+            ]
+        ]);
     }
 }
