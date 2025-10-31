@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BranchController;
 
 // Redirect root to login
 Route::redirect("/", "/auth/login");
@@ -22,6 +23,18 @@ Route::post('/logout', function () {
 
 // Dashboard route
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('auth');
+
+// Branch routes
+Route::prefix('branches')->middleware('auth')->group(function () {
+    Route::get('/', [BranchController::class, 'index'])->name('branches.index');
+    Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
+    Route::post('/', [BranchController::class, 'store'])->name('branches.store');
+    Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
+    Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
+    Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+    // Show route (for viewing details)
+    Route::get('/{branch}', [BranchController::class, 'show'])->name('branches.show');
+});
 
 // Authenticated routes with auth prefix - using AuthController group
 Route::prefix('auth')->middleware('auth')->controller(AuthController::class)->group(function () {
