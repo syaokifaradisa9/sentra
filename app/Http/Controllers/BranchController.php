@@ -6,12 +6,9 @@ use Exception;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Branch;
-<<<<<<< HEAD
-=======
 use App\Services\BranchService;
 use App\Http\Requests\BranchRequest;
 use Illuminate\Http\RedirectResponse;
->>>>>>> a0348dfc2fe0e882570c33f61e458ee154579607
 use App\DataTransferObjects\BranchDTO;
 
 class BranchController extends Controller
