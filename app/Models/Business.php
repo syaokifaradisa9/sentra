@@ -9,20 +9,12 @@ class Business extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'user_id',
         'name',
         'description',
     ];
 
-    /**
-     * Get the user that owns the business.
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
