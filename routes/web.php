@@ -46,3 +46,16 @@ Route::prefix('auth')->middleware('auth')->controller(AuthController::class)->gr
     Route::get('/password', 'changePassword')->name('password');
     Route::put('/update-password', 'updatePassword')->name('update-password');
 });
+
+// Business routes
+Route::prefix('business')->middleware('auth')->group(function () {
+    Route::get('/', [App\Http\Controllers\BusinessController::class, 'index'])->name('business.index');
+    Route::get('/create', [App\Http\Controllers\BusinessController::class, 'create'])->name('business.create');
+    Route::post('/store', [App\Http\Controllers\BusinessController::class, 'store'])->name('business.store');
+    Route::get('/{business}/edit', [App\Http\Controllers\BusinessController::class, 'edit'])->name('business.edit');
+    Route::put('/{business}/update', [App\Http\Controllers\BusinessController::class, 'update'])->name('business.update');
+    Route::delete('/{business}/delete', [App\Http\Controllers\BusinessController::class, 'destroy'])->name('business.delete');
+    Route::get('/datatable', [App\Http\Controllers\BusinessController::class, 'datatable'])->name('business.datatable');
+    Route::get('/print/pdf', [App\Http\Controllers\BusinessController::class, 'printPdf'])->name('business.print.pdf');
+    Route::get('/print/excel', [App\Http\Controllers\BusinessController::class, 'printExcel'])->name('business.print.excel');
+});

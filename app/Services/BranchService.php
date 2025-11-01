@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Repositories\Branch\BranchRepository;
 use App\Models\Branch;
-use App\DTOs\BranchDTO;
+use App\DataTransferObjects\BranchDTO;
 
 class BranchService
 {

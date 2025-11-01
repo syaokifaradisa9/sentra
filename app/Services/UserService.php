@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\DTO\UpdateUserDTO;
+use App\DataTransferObjects\UpdateUserDTO;
 use App\Models\User;
 use App\Repositories\User\UserRepository;
 use Illuminate\Support\Facades\Hash;

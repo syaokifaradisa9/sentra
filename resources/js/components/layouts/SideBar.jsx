@@ -1,4 +1,4 @@
-import { CalendarDays, Home, MonitorDot } from 'lucide-react';
+import { Building, CalendarDays, Home, MonitorDot } from 'lucide-react';
 import SidebarLink from './SideBarLink';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
@@ -63,6 +63,18 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                                         name="Monitong Petugas"
                                         href="/report/lab/kak/officer-monitoring"
                                         icon={MonitorDot}
+                                    />
+                                </div>
+                                <div className="py-2 mt-4">
+                                    <h3 className="text-xs font-medium tracking-wider text-slate-500 dark:text-slate-400">
+                                        Bisnis
+                                    </h3>
+                                </div>
+                                <div className="space-y-1">
+                                    <SidebarLink
+                                        name="Bisnis"
+                                        href="/business"
+                                        icon={Building}
                                     />
                                 </div>
                             </div>

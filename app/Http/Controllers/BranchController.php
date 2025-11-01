@@ -11,7 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Branch;
-use App\DTOs\BranchDTO;
+use App\DataTransferObjects\BranchDTO;
 
 class BranchController extends Controller
 {
