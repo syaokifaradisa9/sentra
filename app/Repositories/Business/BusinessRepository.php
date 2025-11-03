@@ -3,6 +3,7 @@
 namespace App\Repositories\Business;
 
 use App\Models\Business;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface BusinessRepository
@@ -12,4 +13,7 @@ interface BusinessRepository
     public function update(int $id, array $data): ?Business;
     public function delete(int $id): bool;
     public function all(): Collection;
+    public function getByUserId(int $userId): Collection;
+    public function existsForUser(int $businessId, int $userId): bool;
+    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator;
 }

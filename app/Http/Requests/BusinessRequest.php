@@ -13,29 +13,17 @@ class BusinessRequest extends FormRequest
 
     public function rules(): array
     {
-        $method = $this->method();
-
-        switch($method) {
-            case 'POST':
-                return [
-                    'name' => 'required|string|max:255',
-                    'description' => 'required|string|max:500',
-                ];
-            case 'PUT':
-                return [
-                    'name' => 'sometimes|string|max:255',
-                    'description' => 'sometimes|string|max:500',
-                ];
-            default:
-                return [];
-        }
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ];
     }
 
     public function messages(): array
     {
         return [
             'name.required' => 'Nama bisnis wajib diisi.',
-            'description.required' => 'Deskripsi bisnis wajib diisi.',
+            'description.string' => 'Deskripsi bisnis harus berupa teks.',
         ];
     }
 }

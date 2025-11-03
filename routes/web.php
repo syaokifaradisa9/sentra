@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\CategoryController;
 
 // Redirect root to login
 Route::redirect("/", "/auth/login");
@@ -32,8 +34,6 @@ Route::prefix('branches')->middleware('auth')->group(function () {
     Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
     Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
     Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
-    // Show route (for viewing details)
-    Route::get('/{branch}', [BranchController::class, 'show'])->name('branches.show');
 });
 
 // Authenticated routes with auth prefix - using AuthController group
@@ -49,13 +49,23 @@ Route::prefix('auth')->middleware('auth')->controller(AuthController::class)->gr
 
 // Business routes
 Route::prefix('business')->middleware('auth')->group(function () {
-    Route::get('/', [App\Http\Controllers\BusinessController::class, 'index'])->name('business.index');
-    Route::get('/create', [App\Http\Controllers\BusinessController::class, 'create'])->name('business.create');
-    Route::post('/store', [App\Http\Controllers\BusinessController::class, 'store'])->name('business.store');
-    Route::get('/{business}/edit', [App\Http\Controllers\BusinessController::class, 'edit'])->name('business.edit');
-    Route::put('/{business}/update', [App\Http\Controllers\BusinessController::class, 'update'])->name('business.update');
-    Route::delete('/{business}/delete', [App\Http\Controllers\BusinessController::class, 'destroy'])->name('business.delete');
-    Route::get('/datatable', [App\Http\Controllers\BusinessController::class, 'datatable'])->name('business.datatable');
-    Route::get('/print/pdf', [App\Http\Controllers\BusinessController::class, 'printPdf'])->name('business.print.pdf');
-    Route::get('/print/excel', [App\Http\Controllers\BusinessController::class, 'printExcel'])->name('business.print.excel');
+    Route::get('/', [BusinessController::class, 'index'])->name('business.index');
+    Route::get('/create', [BusinessController::class, 'create'])->name('business.create');
+    Route::post('/store', [BusinessController::class, 'store'])->name('business.store');
+    Route::get('/{business}/edit', [BusinessController::class, 'edit'])->name('business.edit');
+    Route::put('/{business}/update', [BusinessController::class, 'update'])->name('business.update');
+    Route::delete('/{business}/delete', [BusinessController::class, 'destroy'])->name('business.delete');
+    Route::get('/datatable', [BusinessController::class, 'datatable'])->name('business.datatable');
+    Route::get('/print/pdf', [BusinessController::class, 'printPdf'])->name('business.print.pdf');
+    Route::get('/print/excel', [BusinessController::class, 'printExcel'])->name('business.print.excel');
+});
+
+// Category routes
+Route::prefix('categories')->middleware('auth')->group(function () {
+    Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/create', [CategoryController::class, 'create'])->name('categories.create');
+    Route::post('/', [CategoryController::class, 'store'])->name('categories.store');
+    Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+    Route::put('/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 });

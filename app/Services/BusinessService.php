@@ -2,41 +2,37 @@
 
 namespace App\Services;
 
-<<<<<<< HEAD
 use App\DataTransferObjects\BusinessDTO;
 use App\Models\Business;
 use App\Repositories\Business\BusinessRepository;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class BusinessService
 {
-    protected BusinessRepository $repository;
+    public function __construct(
+        private BusinessRepository $businessRepository,
+    ) {}
 
-    public function __construct(BusinessRepository $repository)
+    public function listForUser(int $userId): Collection
     {
-        $this->repository = $repository;
+        return $this->businessRepository->getByUserId($userId);
     }
 
-    public function create(BusinessDTO $dto): Business
+    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
     {
-        return $this->repository->store($dto->toArray());
+        return $this->businessRepository->paginateForUser($filters, $userId);
     }
 
-    public function update(int $id, BusinessDTO $dto): ?Business
+    public function getForUser(int $id, int $userId): ?Business
     {
-        return $this->repository->update($id, $dto->toArray());
-=======
-use App\Repositories\Business\BusinessRepository;
-use App\Models\Business;
-use App\DataTransferObjects\BusinessDTO;
+        $business = $this->businessRepository->getById($id);
 
-class BusinessService
-{
-    private BusinessRepository $businessRepository;
+        if (! $business || $business->user_id !== $userId) {
+            return null;
+        }
 
-    public function __construct(BusinessRepository $businessRepository)
-    {
-        $this->businessRepository = $businessRepository;
+        return $business;
     }
 
     public function store(BusinessDTO $businessDTO): Business
@@ -46,36 +42,24 @@ class BusinessService
 
     public function update(int $id, BusinessDTO $businessDTO): ?Business
     {
+        $business = $this->businessRepository->getById($id);
+
+        if (! $business || $business->user_id !== $businessDTO->userId) {
+            return null;
+        }
+
         return $this->businessRepository->update($id, $businessDTO->toArray());
->>>>>>> a0348dfc2fe0e882570c33f61e458ee154579607
     }
 
-    public function delete(int $id): bool
+    public function delete(int $id, int $userId): bool
     {
-<<<<<<< HEAD
-        return $this->repository->delete($id);
-    }
+        $business = $this->businessRepository->getById($id);
 
-    public function findById(int $id): ?Business
-    {
-        return $this->repository->getById($id);
-    }
+        if (! $business || $business->user_id !== $userId) {
+            return false;
+        }
 
-    public function getAll()
-    {
-        return $this->repository->all();
-=======
         return $this->businessRepository->delete($id);
     }
-
-    public function getById(int $id): ?Business
-    {
-        return $this->businessRepository->getById($id);
-    }
-    
-    public function all()
-    {
-        return $this->businessRepository->all();
->>>>>>> a0348dfc2fe0e882570c33f61e458ee154579607
-    }
 }
+
