@@ -3,6 +3,7 @@
 namespace App\Repositories\Branch;
 
 use App\Models\Branch;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentBranchRepository implements BranchRepository
@@ -50,5 +51,69 @@ class EloquentBranchRepository implements BranchRepository
     public function all(): Collection
     {
         return $this->model->all();
+    }
+
+    public function getByUserId(int $userId): Collection
+    {
+        return $this->model->where('user_id', $userId)->get();
+    }
+
+    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
+    {
+        $query = $this->model->newQuery()
+            ->where('user_id', $userId)
+            ->with('business');
+
+        $search = $filters['search'] ?? null;
+        if ($search) {
+            $query->where(function ($builder) use ($search) {
+                $builder
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('opening_time', 'like', "%{$search}%")
+                    ->orWhere('closing_time', 'like', "%{$search}%")
+                    ->orWhereHas('business', function ($businessQuery) use ($search) {
+                        $businessQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (! empty($filters['name'])) {
+            $query->where('name', 'like', "%{$filters['name']}%");
+        }
+
+        if (! empty($filters['address'])) {
+            $query->where('address', 'like', "%{$filters['address']}%");
+        }
+
+        if (! empty($filters['business'])) {
+            $query->whereHas('business', function ($businessQuery) use ($filters) {
+                $businessQuery->where('name', 'like', "%{$filters['business']}%");
+            });
+        }
+
+        $allowedSortColumns = [
+            'name',
+            'address',
+            'opening_time',
+            'closing_time',
+            'created_at',
+            'updated_at',
+        ];
+
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        if (! in_array($sortBy, $allowedSortColumns, true)) {
+            $sortBy = 'created_at';
+        }
+
+        $sortDirection = strtolower($filters['sort_direction'] ?? 'desc');
+        $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
+
+        $limit = (int) ($filters['limit'] ?? 20);
+
+        return $query
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($limit > 0 ? $limit : 20)
+            ->withQueryString();
     }
 }

@@ -29,6 +29,7 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard
 // Branch routes
 Route::prefix('branches')->middleware('auth')->group(function () {
     Route::get('/', [BranchController::class, 'index'])->name('branches.index');
+    Route::get('/datatable', [BranchController::class, 'datatable'])->name('branches.datatable');
     Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
     Route::post('/', [BranchController::class, 'store'])->name('branches.store');
     Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
@@ -63,6 +64,7 @@ Route::prefix('business')->middleware('auth')->group(function () {
 // Category routes
 Route::prefix('categories')->middleware('auth')->group(function () {
     Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/datatable', [CategoryController::class, 'datatable'])->name('categories.datatable');
     Route::get('/create', [CategoryController::class, 'create'])->name('categories.create');
     Route::post('/', [CategoryController::class, 'store'])->name('categories.store');
     Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');

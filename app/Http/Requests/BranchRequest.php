@@ -13,28 +13,13 @@ class BranchRequest extends FormRequest
 
     public function rules(): array
     {
-        $method = $this->method();
-
-        switch($method) {
-            case 'POST':
-                return [
-                    'name' => 'required|string|max:255',
-                    'address' => 'required|string|max:500',
-                    'opening_time' => 'required|date_format:H:i',
-                    'closing_time' => 'required|date_format:H:i|after:opening_time',
-                    'business_id' => 'required|exists:businesses,id',
-                ];
-            case 'PUT':
-                return [
-                    'name' => 'sometimes|string|max:255',
-                    'address' => 'sometimes|string|max:500',
-                    'opening_time' => 'sometimes|date_format:H:i',
-                    'closing_time' => 'sometimes|date_format:H:i|after:opening_time',
-                    'business_id' => 'sometimes|exists:businesses,id',
-                ];
-            default:
-                return [];
-        }
+        return [
+            'name' => 'required|string|max:255',
+            'address' => 'required|string|max:500',
+            'opening_time' => 'required|date_format:H:i',
+            'closing_time' => 'required|date_format:H:i|after:opening_time',
+            'business_id' => 'required|exists:businesses,id',
+        ];
     }
 
     public function messages(): array
