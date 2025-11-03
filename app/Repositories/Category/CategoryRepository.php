@@ -3,6 +3,7 @@
 namespace App\Repositories\Category;
 
 use App\Models\Category;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface CategoryRepository
@@ -14,4 +15,5 @@ interface CategoryRepository
     public function all(): Collection;
     public function getByBranchId(int $branchId): Collection;
     public function getByBusinessId(int $businessId): Collection;
+    public function paginateForBranchIds(array $branchIds, array $filters): LengthAwarePaginator;
 }

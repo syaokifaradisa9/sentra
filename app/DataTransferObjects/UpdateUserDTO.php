@@ -1,11 +1,6 @@
 <?php
 
 namespace App\DataTransferObjects;
-<<<<<<< HEAD
-=======
-
-use App\Http\Requests\Auth\UpdateProfileRequest;
->>>>>>> a0348dfc2fe0e882570c33f61e458ee154579607
 
 class UpdateUserDTO
 {
