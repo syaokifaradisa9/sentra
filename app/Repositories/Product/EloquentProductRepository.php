@@ -3,6 +3,7 @@
 namespace App\Repositories\Product;
 
 use App\Models\Product;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentProductRepository implements ProductRepository
@@ -69,5 +70,70 @@ class EloquentProductRepository implements ProductRepository
     public function getByCategoryId(int $categoryId): Collection
     {
         return $this->model->where('category_id', $categoryId)->get();
+    }
+
+    public function paginateForUser(int $userId, array $filters): LengthAwarePaginator
+    {
+        $query = $this->model
+            ->newQuery()
+            ->with(['category.branches', 'branches']);
+
+        $query->whereHas('branches', function ($builder) use ($userId) {
+            $builder->where('branches.user_id', $userId);
+        });
+
+        $search = $filters['search'] ?? null;
+        if ($search) {
+            $query->where(function ($builder) use ($search) {
+                $builder
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if (! empty($filters['name'])) {
+            $query->where('name', 'like', "%{$filters['name']}%");
+        }
+
+        if (! empty($filters['description'])) {
+            $query->where('description', 'like', "%{$filters['description']}%");
+        }
+
+        if (! empty($filters['category'])) {
+            $query->whereHas('category', function ($builder) use ($filters) {
+                $builder->where('name', 'like', "%{$filters['category']}%");
+            });
+        }
+
+        if (! empty($filters['branch'])) {
+            $query->whereHas('branches', function ($builder) use ($filters) {
+                $builder->where('name', 'like', "%{$filters['branch']}%");
+            });
+        }
+
+        $allowedSortColumns = [
+            'name',
+            'price',
+            'created_at',
+            'updated_at',
+        ];
+
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        if (! in_array($sortBy, $allowedSortColumns, true)) {
+            $sortBy = 'created_at';
+        }
+
+        $sortDirection = strtolower($filters['sort_direction'] ?? 'desc');
+        $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
+
+        $limit = (int) ($filters['limit'] ?? 20);
+
+        return $query
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($limit > 0 ? $limit : 20)
+            ->withQueryString();
     }
 }

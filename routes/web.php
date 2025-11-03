@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
 
 // Redirect root to login
 Route::redirect("/", "/auth/login");
@@ -70,4 +71,15 @@ Route::prefix('categories')->middleware('auth')->group(function () {
     Route::get('/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
     Route::put('/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+});
+
+// Product routes
+Route::prefix('products')->middleware('auth')->group(function () {
+    Route::get('/', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/datatable', [ProductController::class, 'datatable'])->name('products.datatable');
+    Route::get('/create', [ProductController::class, 'create'])->name('products.create');
+    Route::post('/', [ProductController::class, 'store'])->name('products.store');
+    Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::post('/{product}/update', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 });

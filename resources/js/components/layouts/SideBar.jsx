@@ -1,4 +1,4 @@
-import { Building, CalendarDays, GitBranch, Home, MonitorDot, Tags } from 'lucide-react';
+import { Building, CalendarDays, GitBranch, Home, MonitorDot, Package, Tags } from 'lucide-react';
 import SidebarLink from './SideBarLink';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
@@ -85,6 +85,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                                         name="Kategori"
                                         href="/categories"
                                         icon={Tags}
+                                    />
+                                    <SidebarLink
+                                        name="Produk"
+                                        href="/products"
+                                        icon={Package}
                                     />
                                 </div>
                             </div>
