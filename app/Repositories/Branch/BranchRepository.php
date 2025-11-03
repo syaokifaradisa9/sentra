@@ -15,4 +15,5 @@ interface BranchRepository
     public function all(): Collection;
     public function getByUserId(int $userId): Collection;
     public function paginateForUser(array $filters, int $userId): LengthAwarePaginator;
+    public function getForExport(array $filters, int $userId): Collection;
 }

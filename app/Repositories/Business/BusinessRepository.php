@@ -16,4 +16,6 @@ interface BusinessRepository
     public function getByUserId(int $userId): Collection;
     public function existsForUser(int $businessId, int $userId): bool;
     public function paginateForUser(array $filters, int $userId): LengthAwarePaginator;
+    public function getForExport(array $filters, int $userId): Collection;
 }
+

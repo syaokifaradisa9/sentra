@@ -61,5 +61,9 @@ class BusinessService
 
         return $this->businessRepository->delete($id);
     }
-}
 
+    public function getForExport(array $filters, int $userId): Collection
+    {
+        return $this->businessRepository->getForExport($filters, $userId);
+    }
+}

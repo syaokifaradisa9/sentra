@@ -16,4 +16,5 @@ interface CategoryRepository
     public function getByBranchId(int $branchId): Collection;
     public function getByBusinessId(int $businessId): Collection;
     public function paginateForBranchIds(array $branchIds, array $filters): LengthAwarePaginator;
+    public function getForBranchIds(array $branchIds, array $filters): Collection;
 }

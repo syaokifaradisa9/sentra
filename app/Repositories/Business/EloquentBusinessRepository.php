@@ -4,6 +4,7 @@ namespace App\Repositories\Business;
 
 use App\Models\Business;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentBusinessRepository implements BusinessRepository
@@ -68,6 +69,22 @@ class EloquentBusinessRepository implements BusinessRepository
 
     public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
     {
+        $query = $this->buildQueryForUser($filters, $userId);
+
+        $limit = (int) ($filters['limit'] ?? 20);
+
+        return $query
+            ->paginate($limit > 0 ? $limit : 20)
+            ->withQueryString();
+    }
+
+    public function getForExport(array $filters, int $userId): Collection
+    {
+        return $this->buildQueryForUser($filters, $userId)->get();
+    }
+
+    private function buildQueryForUser(array $filters, int $userId): Builder
+    {
         $query = $this->model->newQuery()->where('user_id', $userId);
 
         $search = $filters['search'] ?? null;
@@ -95,11 +112,7 @@ class EloquentBusinessRepository implements BusinessRepository
         $sortDirection = strtolower($filters['sort_direction'] ?? 'desc');
         $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
 
-        $limit = (int) ($filters['limit'] ?? 20);
-
-        return $query
-            ->orderBy($sortBy, $sortDirection)
-            ->paginate($limit > 0 ? $limit : 20)
-            ->withQueryString();
+        return $query->orderBy($sortBy, $sortDirection);
     }
 }
+

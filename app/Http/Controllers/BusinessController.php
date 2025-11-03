@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use App\DataTransferObjects\BusinessDTO;
 use App\Http\Requests\BusinessRequest;
+use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Business;
 use App\Services\BusinessService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
 
 class BusinessController extends Controller
@@ -20,12 +25,12 @@ class BusinessController extends Controller
         private BusinessService $businessService,
     ) {}
 
-    public function index(): Response
+    public function index(): InertiaResponse
     {
         return Inertia::render('business/Index');
     }
 
-    public function create(): Response
+    public function create(): InertiaResponse
     {
         return Inertia::render('business/Create');
     }
@@ -45,7 +50,7 @@ class BusinessController extends Controller
         }
     }
 
-    public function show(Business $business): Response
+    public function show(Business $business): InertiaResponse
     {
         $this->ensureBusinessOwner($business);
 
@@ -58,7 +63,7 @@ class BusinessController extends Controller
         ]);
     }
 
-    public function edit(Business $business): Response
+    public function edit(Business $business): InertiaResponse
     {
         $this->ensureBusinessOwner($business);
 
@@ -121,18 +126,52 @@ class BusinessController extends Controller
         return response()->json($paginator);
     }
 
-    public function printPdf(Request $request): JsonResponse
+    public function printPdf(DatatableRequest $request)
     {
-        return response()->json([
-            'message' => 'Fitur cetak PDF belum tersedia.',
-        ], 501);
+        $records = $this->businessService->getForExport($request->validated(), auth()->id());
+
+        $pdf = Pdf::loadView('reports.business', [
+            'records' => $records,
+        ])->setPaper('A4', 'landscape');
+
+        $fileName = 'laporan-bisnis-' . now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->stream($fileName);
     }
 
-    public function printExcel(Request $request): JsonResponse
+    public function printExcel(DatatableRequest $request)
     {
-        return response()->json([
-            'message' => 'Fitur cetak Excel belum tersedia.',
-        ], 501);
+        $records = $this->businessService->getForExport($request->validated(), auth()->id());
+
+        $spreadsheet = new Spreadsheet();
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $headers = ['No', 'Nama Bisnis', 'Deskripsi'];
+        foreach ($headers as $index => $header) {
+            $columnLetter = chr(65 + $index);
+            $worksheet->setCellValue("{$columnLetter}1", $header);
+            $worksheet->getStyle("{$columnLetter}1")->getAlignment()->setHorizontal('center')->setVertical('center');
+            $worksheet->getColumnDimension($columnLetter)->setAutoSize(true);
+        }
+
+        foreach ($records as $rowIndex => $record) {
+            $rowNumber = $rowIndex + 2;
+            $worksheet->setCellValue("A{$rowNumber}", $rowIndex + 1);
+            $worksheet->setCellValue("B{$rowNumber}", $record->name);
+            $worksheet->setCellValue("C{$rowNumber}", $record->description ?: '-');
+            $worksheet->getStyle("A{$rowNumber}")
+                ->getAlignment()
+                ->setHorizontal('center')
+                ->setVertical('center');
+        }
+
+        $fileName = 'Laporan Data Bisnis Per ' . now()->format('d F Y') . '.xlsx';
+        $filePath = storage_path('app/public/' . $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return Response::download($filePath)->deleteFileAfterSend(true);
     }
 
     private function ensureBusinessOwner(Business $business): void
@@ -140,3 +179,5 @@ class BusinessController extends Controller
         abort_if($business->user_id !== auth()->id(), 403);
     }
 }
+
+

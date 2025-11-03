@@ -80,6 +80,11 @@ class BranchService
         return $this->branchRepository->paginateForUser($filters, $userId);
     }
 
+    public function getForExport(array $filters, int $userId): Collection
+    {
+        return $this->branchRepository->getForExport($filters, $userId);
+    }
+
     private function assertBusinessOwnership(int $businessId, int $userId): void
     {
         if (! $this->businessRepository->existsForUser($businessId, $userId)) {

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, router } from "@inertiajs/react";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Edit, Plus, Printer, Trash2 } from "lucide-react";
 import RootLayout from "../../components/layouts/RootLayout";
 import ContentCard from "../../components/layouts/ContentCard";
 import Button from "../../components/buttons/Button";
+import DropdownButton from "../../components/buttons/DropdownButton";
 import ConfirmationAlert from "../../components/alerts/ConfirmationAlert";
 import DataTable from "../../components/tables/Datatable";
 import FormSearch from "../../components/forms/FormSearch";
@@ -113,6 +114,12 @@ export default function ProductIndex() {
             ? branches.map((branch) => branch.name).join(", ")
             : "-";
 
+    const onPrint = (type) => {
+        const query = new URLSearchParams(params).toString();
+        const url = `/products/print/${type}?${query}`;
+        window.open(url, "_blank");
+    };
+
     return (
         <RootLayout title="Data Produk">
             <ConfirmationAlert
@@ -156,6 +163,23 @@ export default function ProductIndex() {
                     sortBy={params.sort_by}
                     sortDirection={params.sort_direction}
                     onHeaderClick={handleSort}
+                    additionalHeaderElements={
+                        <DropdownButton
+                            icon={
+                                <Printer className="size-4 text-gray-700 dark:text-gray-300" />
+                            }
+                            items={[
+                                {
+                                    label: "PDF",
+                                    onClick: () => onPrint("pdf"),
+                                },
+                                {
+                                    label: "Excel",
+                                    onClick: () => onPrint("excel"),
+                                },
+                            ]}
+                        />
+                    }
                     columns={[
                         {
                             name: "name",

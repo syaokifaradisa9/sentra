@@ -5,6 +5,7 @@ namespace App\Repositories\Category;
 use App\Models\Category;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 
 class EloquentCategoryRepository implements CategoryRepository
 {
@@ -69,6 +70,22 @@ class EloquentCategoryRepository implements CategoryRepository
 
     public function paginateForBranchIds(array $branchIds, array $filters): LengthAwarePaginator
     {
+        $query = $this->buildQueryForBranchIds($branchIds, $filters);
+
+        $limit = (int) ($filters['limit'] ?? 20);
+
+        return $query
+            ->paginate($limit > 0 ? $limit : 20)
+            ->withQueryString();
+    }
+
+    public function getForBranchIds(array $branchIds, array $filters): Collection
+    {
+        return $this->buildQueryForBranchIds($branchIds, $filters)->get();
+    }
+
+    private function buildQueryForBranchIds(array $branchIds, array $filters): Builder
+    {
         $query = $this->model->newQuery()->with('branches');
 
         if (! empty($branchIds)) {
@@ -113,11 +130,6 @@ class EloquentCategoryRepository implements CategoryRepository
         $sortDirection = strtolower($filters['sort_direction'] ?? 'desc');
         $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
 
-        $limit = (int) ($filters['limit'] ?? 20);
-
-        return $query
-            ->orderBy($sortBy, $sortDirection)
-            ->paginate($limit > 0 ? $limit : 20)
-            ->withQueryString();
+        return $query->orderBy($sortBy, $sortDirection);
     }
 }

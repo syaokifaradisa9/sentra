@@ -93,7 +93,7 @@ export default function BusinessIndex() {
 
     const onPrint = (type) => {
         const query = new URLSearchParams(params).toString();
-        const url = `${window.location.href}/print/${type}?${query}`;
+        const url = `/business/print/${type}?${query}`;
         window.open(url, "_blank");
     };
 

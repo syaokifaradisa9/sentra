@@ -5,6 +5,7 @@ namespace App\Repositories\Product;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 
 class EloquentProductRepository implements ProductRepository
 {
@@ -74,6 +75,22 @@ class EloquentProductRepository implements ProductRepository
 
     public function paginateForUser(int $userId, array $filters): LengthAwarePaginator
     {
+        $query = $this->buildQueryForUser($userId, $filters);
+
+        $limit = (int) ($filters['limit'] ?? 20);
+
+        return $query
+            ->paginate($limit > 0 ? $limit : 20)
+            ->withQueryString();
+    }
+
+    public function getForUser(int $userId, array $filters): Collection
+    {
+        return $this->buildQueryForUser($userId, $filters)->get();
+    }
+
+    private function buildQueryForUser(int $userId, array $filters): Builder
+    {
         $query = $this->model
             ->newQuery()
             ->with(['category.branches', 'branches']);
@@ -129,11 +146,6 @@ class EloquentProductRepository implements ProductRepository
         $sortDirection = strtolower($filters['sort_direction'] ?? 'desc');
         $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
 
-        $limit = (int) ($filters['limit'] ?? 20);
-
-        return $query
-            ->orderBy($sortBy, $sortDirection)
-            ->paginate($limit > 0 ? $limit : 20)
-            ->withQueryString();
+        return $query->orderBy($sortBy, $sortDirection);
     }
 }

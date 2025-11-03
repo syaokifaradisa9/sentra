@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use App\DataTransferObjects\BranchDTO;
 use App\Http\Requests\BranchRequest;
+use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Branch;
 use App\Services\BranchService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
 
 class BranchController extends Controller
@@ -20,12 +25,12 @@ class BranchController extends Controller
         private BranchService $branchService,
     ) {}
 
-    public function index(): Response
+    public function index(): InertiaResponse
     {
         return Inertia::render('branch/Index');
     }
 
-    public function create(): Response
+    public function create(): InertiaResponse
     {
         return Inertia::render('branch/Create', [
             'businesses' => $this->businessOptions(),
@@ -54,7 +59,7 @@ class BranchController extends Controller
         }
     }
 
-    public function edit(Branch $branch): Response
+    public function edit(Branch $branch): InertiaResponse
     {
         $this->ensureBranchOwner($branch);
 
@@ -113,6 +118,68 @@ class BranchController extends Controller
 
             return back()->with('error', 'Gagal menghapus cabang');
         }
+    }
+
+    public function printPdf(DatatableRequest $request)
+    {
+        $records = $this->branchService->getForExport($request->validated(), auth()->id());
+
+        $pdf = Pdf::loadView('reports.branches', [
+            'records' => $records,
+        ])->setPaper('A4', 'landscape');
+
+        $fileName = 'laporan-cabang-' . now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->stream($fileName);
+    }
+
+    public function printExcel(DatatableRequest $request)
+    {
+        $records = $this->branchService->getForExport($request->validated(), auth()->id());
+
+        $spreadsheet = new Spreadsheet();
+        $worksheet = $spreadsheet->getActiveSheet();
+
+        $headers = ['No', 'Nama Cabang', 'Bisnis', 'Alamat', 'Jam Buka', 'Jam Tutup'];
+        foreach ($headers as $index => $header) {
+            $columnLetter = chr(65 + $index);
+            $worksheet->setCellValue("{$columnLetter}1", $header);
+            $worksheet->getStyle("{$columnLetter}1")->getAlignment()->setHorizontal('center')->setVertical('center');
+            $worksheet->getColumnDimension($columnLetter)->setAutoSize(true);
+        }
+
+        foreach ($records as $rowIndex => $record) {
+            $rowNumber = $rowIndex + 2;
+            $opening = $record->opening_time instanceof \DateTimeInterface
+                ? $record->opening_time->format('H:i')
+                : ($record->opening_time ?? null);
+            $closing = $record->closing_time instanceof \DateTimeInterface
+                ? $record->closing_time->format('H:i')
+                : ($record->closing_time ?? null);
+
+            $worksheet->setCellValue("A{$rowNumber}", $rowIndex + 1);
+            $worksheet->setCellValue("B{$rowNumber}", $record->name);
+            $worksheet->setCellValue("C{$rowNumber}", $record->business->name ?? '-');
+            $worksheet->setCellValue("D{$rowNumber}", $record->address);
+            $worksheet->setCellValue("E{$rowNumber}", $opening ?: '-');
+            $worksheet->setCellValue("F{$rowNumber}", $closing ?: '-');
+            $worksheet->getStyle("A{$rowNumber}")
+                ->getAlignment()
+                ->setHorizontal('center')
+                ->setVertical('center');
+            $worksheet->getStyle("E{$rowNumber}:F{$rowNumber}")
+                ->getAlignment()
+                ->setHorizontal('center')
+                ->setVertical('center');
+        }
+
+        $fileName = 'Laporan Data Cabang Per ' . now()->format('d F Y') . '.xlsx';
+        $filePath = storage_path('app/public/' . $fileName);
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return Response::download($filePath)->deleteFileAfterSend(true);
     }
 
     private function businessOptions()

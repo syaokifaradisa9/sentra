@@ -177,6 +177,11 @@ class ProductService
             ->values();
     }
 
+    public function getForExport(array $filters, int $userId): Collection
+    {
+        return $this->productRepository->getForUser($userId, $filters);
+    }
+
     private function syncProductBranches(int $productId, array $branchIds): void
     {
         $this->productBranchRepository->deleteByProductId($productId);

@@ -81,6 +81,16 @@ class CategoryService
         return $this->categoryRepository->paginateForBranchIds($branchIds, $filters);
     }
 
+    public function getForExport(array $filters, int $userId): Collection
+    {
+        $branchIds = $this->branchRepository
+            ->getByUserId($userId)
+            ->pluck('id')
+            ->toArray();
+
+        return $this->categoryRepository->getForBranchIds($branchIds, $filters);
+    }
+
     private function syncCategoryBranches(int $categoryId, array $branchIds, int $userId): void
     {
         $branchIds = array_unique(array_map('intval', $branchIds));
