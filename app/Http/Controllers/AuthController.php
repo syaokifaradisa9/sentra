@@ -67,4 +67,13 @@ class AuthController extends Controller
 
         return to_route("password")->with('success', 'Password berhasil diperbarui');
     }
+
+    public function logout()
+    {
+        auth()->logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect('/auth/login');
+    }
 }
