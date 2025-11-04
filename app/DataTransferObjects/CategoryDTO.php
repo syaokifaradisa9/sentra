@@ -9,6 +9,7 @@ class CategoryDTO
     public function __construct(
         public string $name,
         public array $branchIds = [],
+        public ?string $icon = null,
     ) {}
 
     public static function fromAppRequest(CategoryRequest $request): self
@@ -18,6 +19,7 @@ class CategoryDTO
         return new self(
             name: $validated['name'],
             branchIds: $validated['branch_ids'] ?? [],
+            icon: $validated['icon'] ?? null,
         );
     }
 
@@ -25,6 +27,7 @@ class CategoryDTO
     {
         return [
             'name' => $this->name,
+            'icon' => $this->icon,
         ];
     }
 }

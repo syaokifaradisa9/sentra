@@ -8,6 +8,10 @@ import DropdownButton from "../../components/buttons/DropdownButton";
 import ConfirmationAlert from "../../components/alerts/ConfirmationAlert";
 import DataTable from "../../components/tables/Datatable";
 import FormSearch from "../../components/forms/FormSearch";
+import {
+    CATEGORY_ICON_LABEL_MAP,
+    CATEGORY_ICON_MAP,
+} from "../../constants/categoryIcons";
 
 const initialDatatableState = {
     data: [],
@@ -158,6 +162,32 @@ export default function CategoryIndex() {
                         />
                     }
                     columns={[
+                        {
+                            name: null,
+                            header: "Ikon",
+                            headerClassName: "w-24",
+                            bodyClassname: "w-24",
+                            render: (item) => {
+                                const iconName = item.icon ?? null;
+                                const IconComponent =
+                                    iconName && CATEGORY_ICON_MAP[iconName];
+                                return IconComponent ? (
+                                    <span
+                                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-primary dark:border-slate-700 dark:bg-slate-800 dark:text-teal-200"
+                                        title={
+                                            CATEGORY_ICON_LABEL_MAP[iconName] ??
+                                            "Ikon kategori"
+                                        }
+                                    >
+                                        <IconComponent className="h-5 w-5" />
+                                    </span>
+                                ) : (
+                                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                                        -
+                                    </span>
+                                );
+                            },
+                        },
                         {
                             name: "name",
                             header: "Nama Kategori",

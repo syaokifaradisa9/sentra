@@ -65,6 +65,7 @@ class CategoryController extends Controller
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,
+                'icon' => $category->icon,
                 'branch_ids' => $category->branches->pluck('id')->values(),
             ],
             'branches' => $this->mappedBranchesForUser(),
@@ -176,6 +177,4 @@ class CategoryController extends Controller
             ->values();
     }
 }
-
-
 
