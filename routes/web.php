@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\CashierController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 
@@ -29,6 +30,7 @@ Route::prefix('auth')
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/cashier', [CashierController::class, 'index'])->name('cashier');
 
     Route::prefix('branches')
         ->controller(BranchController::class)
