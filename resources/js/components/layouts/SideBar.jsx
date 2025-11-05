@@ -96,6 +96,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                                         href="/products"
                                         icon={Package}
                                     />
+                                    <SidebarLink
+                                        name="Karyawan"
+                                        href="/employees"
+                                        icon={Package} // Using the same icon as products for now
+                                    />
                                 </div>
                             </div>
                         </div>

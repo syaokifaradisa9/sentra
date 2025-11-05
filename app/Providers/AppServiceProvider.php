@@ -17,6 +17,8 @@ use App\Repositories\CategoryBranch\CategoryBranchRepository;
 use App\Repositories\CategoryBranch\EloquentCategoryBranchRepository;
 use App\Repositories\ProductBranch\ProductBranchRepository;
 use App\Repositories\ProductBranch\EloquentProductBranchRepository;
+use App\Repositories\UserBranch\UserBranchRepository;
+use App\Repositories\UserBranch\EloquentUserBranchRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
         
         // ProductBranch Repository
         $this->app->singleton(ProductBranchRepository::class, EloquentProductBranchRepository::class);
+        
+        // UserBranch Repository
+        $this->app->singleton(UserBranchRepository::class, EloquentUserBranchRepository::class);
     }
 
     /**
