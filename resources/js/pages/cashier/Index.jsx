@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import CashierLayout from '../../components/layouts/CashierLayout';
+import FormSelect from '../../components/forms/FormSelect';
 import { CATEGORY_ICON_MAP } from '../../constants/categoryIcons';
 
 function formatCurrency(value) {
@@ -745,56 +746,20 @@ export default function CashierIndex({
                     </aside>
 
                     <section className="flex h-full min-h-0 flex-col space-y-2 overflow-hidden lg:px-2 lg:pt-4">
-                        <div className="rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-slate-200 backdrop-blur-sm lg:hidden dark:bg-slate-900/60 dark:ring-slate-700">
-                            <div className="flex flex-wrap gap-2">
-                                {categoryOptions.map((category) => {
-                                    const isActive =
-                                        String(selectedCategory) ===
-                                        String(category.id);
-                                    return (
-                                        <button
-                                            key={category.id}
-                                            type="button"
-                                            onClick={() =>
-                                                setSelectedCategory(category.id)
-                                            }
-                                            className={`flex items-center gap-3 rounded-xl border px-3 py-1.5 text-left text-xs transition ${
-                                                isActive
-                                                    ? 'border-primary/40 bg-primary/10 text-primary shadow-sm ring-1 ring-primary/40 dark:border-teal-400/40 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/40'
-                                                    : 'border-slate-200 bg-white/80 text-slate-600 hover:border-primary/30 hover:text-primary dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300'
-                                            }`}
-                                        >
-                                            <span className="flex items-center gap-2">
-                                                {(() => {
-                                                    if (category.id === 'all') {
-                                                        return (
-                                                            <Coffee className="h-4 w-4" />
-                                                        );
-                                                    }
-
-                                                    const iconName =
-                                                        category.icon ?? null;
-                                                    const IconComponent =
-                                                        iconName &&
-                                                        CATEGORY_ICON_MAP[
-                                                            iconName
-                                                        ]
-                                                            ? CATEGORY_ICON_MAP[
-                                                                  iconName
-                                                              ]
-                                                            : Package2;
-
-                                                    return (
-                                                        <IconComponent className="h-4 w-4" />
-                                                    );
-                                                })()}
-                                                <span>{category.name}</span>
-                                            </span>
-                                        </button>
-                                    );
-                                })}
+                        <div className="rounded-2xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200 backdrop-blur-sm lg:hidden dark:bg-slate-900/60 dark:ring-slate-700">
+                            <div className="mb-3">
+                                <FormSelect
+                                    name="category"
+                                    value={selectedCategory}
+                                    onChange={(e) => setSelectedCategory(e.target.value)}
+                                    options={categoryOptions.map(category => ({
+                                        value: category.id,
+                                        label: `${category.name} (${category.product_count})`
+                                    }))}
+                                    className="w-full"
+                                />
                             </div>
-                            <div className="mt-3 w-full">
+                            <div className="w-full">
                                 <label
                                     htmlFor="product-search-mobile"
                                     className="sr-only"
@@ -809,11 +774,8 @@ export default function CashierIndex({
                                         setSearch(event.target.value)
                                     }
                                     placeholder="Cari menu atau kode..."
-                                    className="w-full rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-600 ring-1 ring-slate-200 transition outline-none focus:bg-white focus:text-primary focus:ring-2 focus:ring-primary/40 dark:bg-slate-900/40 dark:text-slate-200 dark:ring-slate-700 dark:focus:bg-slate-900"
+                                    className="w-full rounded-xl bg-slate-100 px-4 py-3 text-sm text-slate-600 ring-1 ring-slate-200 transition outline-none focus:bg-white focus:text-primary focus:ring-2 focus:ring-primary/40 dark:bg-slate-900/40 dark:text-slate-200 dark:ring-slate-700 dark:focus:bg-slate-900"
                                 />
-                            </div>
-                            <div className="mt-3 flex justify-end">
-                                <ViewModeToggle />
                             </div>
                         </div>
 
@@ -848,146 +810,208 @@ export default function CashierIndex({
                                 </div>
                             ) : (
                                 <div className="mt-3">
-                                    {viewMode === 'grid' ? (
-                                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                                            {filteredProducts.map((product) => {
-                                                const quantityInOrder =
-                                                    orderQuantities[product.id] ?? 0;
-                                                const quantityBadge =
-                                                    quantityInOrder > 0 ? (
-                                                        <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm dark:bg-teal-500/90">
-                                                            {quantityInOrder}x
-                                                        </span>
-                                                    ) : null;
+                                    {/* Mobile devices always show list view - hidden on desktop */}
+                                    <div className="space-y-3 lg:hidden">
+                                        {filteredProducts.map((product) => {
+                                            const quantityInOrder = orderQuantities[product.id] ?? 0;
+                                            const quantityBadge = quantityInOrder > 0 ? (
+                                                <span className="absolute right-2 top-2 inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm dark:bg-teal-500/90">
+                                                    {quantityInOrder}x
+                                                </span>
+                                            ) : null;
 
-                                                return (
-                                                    <article
-                                                        key={product.id}
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onClick={() => handleAddProduct(product)}
-                                                        onKeyDown={(event) => {
-                                                            if (
-                                                                event.key === 'Enter' ||
-                                                                event.key === ' '
-                                                            ) {
-                                                                event.preventDefault();
-                                                                handleAddProduct(product);
-                                                            }
-                                                        }}
-                                                        className="group relative flex select-none flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-md focus:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-teal-400/40 dark:focus-visible:border-teal-300 dark:focus-visible:ring-teal-400/40"
-                                                    >
-                                                        <div className="relative h-32 w-full overflow-hidden bg-slate-100 dark:bg-slate-900/40">
-                                                            {quantityBadge}
-                                                            {product.photo_url ? (
-                                                                <img
-                                                                    src={product.photo_url}
-                                                                    alt={product.name}
-                                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                                                                />
-                                                            ) : (
-                                                                <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-                                                                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary shadow-sm dark:bg-teal-400/10 dark:text-teal-300">
-                                                                        {product.name
-                                                                            ?.charAt(0)
-                                                                            ?.toUpperCase() ?? '?'}
-                                                                    </span>
-                                                                    <p className="text-[10px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                                                                        Tidak ada foto
-                                                                    </p>
-                                                                </div>
-                                                            )}
+                                            return (
+                                                <article
+                                                    key={product.id}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => handleAddProduct(product)}
+                                                    onKeyDown={(event) => {
+                                                        if (
+                                                            event.key === 'Enter' ||
+                                                            event.key === ' '
+                                                        ) {
+                                                            event.preventDefault();
+                                                            handleAddProduct(product);
+                                                        }
+                                                    }}
+                                                    className="group relative flex select-none items-center gap-3 overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-md focus:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-teal-400/40 dark:focus-visible:border-teal-300 dark:focus-visible:ring-teal-400/40"
+                                                >
+                                                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900/40">
+                                                        {quantityBadge}
+                                                        {product.photo_url ? (
+                                                            <img
+                                                                src={product.photo_url}
+                                                                alt={product.name}
+                                                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center text-xs text-slate-400 dark:text-slate-500">
+                                                                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-[10px] font-semibold text-primary shadow-sm dark:bg-teal-400/10 dark:text-teal-300">
+                                                                    {product.name
+                                                                        ?.charAt(0)
+                                                                        ?.toUpperCase() ?? '?'}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-1 flex-col">
+                                                        <div>
+                                                            <span className="text-[10px] font-semibold tracking-wide text-primary uppercase dark:text-teal-300">
+                                                                {product.category_name ??
+                                                                    'Tanpa Kategori'}
+                                                            </span>
+                                                            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100 line-clamp-1">
+                                                                {product.name}
+                                                            </h3>
                                                         </div>
-                                                        <div className="flex flex-1 flex-col gap-1.5 p-4">
+                                                        <div className="mt-1 flex items-center justify-between">
+                                                            <span className="text-base font-semibold text-teal-600 dark:text-teal-300">
+                                                                {formatCurrency(product.price)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    {/* Desktop - Grid view when viewMode is grid, hidden on mobile */}
+                                    <div className={`hidden lg:grid lg:gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 ${viewMode === 'grid' ? 'lg:block' : 'lg:hidden'}`}>
+                                        {filteredProducts.map((product) => {
+                                            const quantityInOrder = orderQuantities[product.id] ?? 0;
+                                            const quantityBadge = quantityInOrder > 0 ? (
+                                                <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm dark:bg-teal-500/90">
+                                                    {quantityInOrder}x
+                                                </span>
+                                            ) : null;
+
+                                            return (
+                                                <article
+                                                    key={product.id}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => handleAddProduct(product)}
+                                                    onKeyDown={(event) => {
+                                                        if (
+                                                            event.key === 'Enter' ||
+                                                            event.key === ' '
+                                                        ) {
+                                                            event.preventDefault();
+                                                            handleAddProduct(product);
+                                                        }
+                                                    }}
+                                                    className="group relative flex select-none flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-md focus:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-teal-400/40 dark:focus-visible:border-teal-300 dark:focus-visible:ring-teal-400/40"
+                                                >
+                                                    <div className="relative h-32 w-full overflow-hidden bg-slate-100 dark:bg-slate-900/40">
+                                                        {quantityBadge}
+                                                        {product.photo_url ? (
+                                                            <img
+                                                                src={product.photo_url}
+                                                                alt={product.name}
+                                                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-xs text-slate-400 dark:text-slate-500">
+                                                                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-base font-semibold text-primary shadow-sm dark:bg-teal-400/10 dark:text-teal-300">
+                                                                    {product.name
+                                                                        ?.charAt(0)
+                                                                        ?.toUpperCase() ?? '?'}
+                                                                </span>
+                                                                <p className="text-[10px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                                                                    Tidak ada foto
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-1 flex-col gap-1.5 p-4">
+                                                        <span className="text-[11px] font-semibold tracking-wide text-primary uppercase dark:text-teal-300">
+                                                            {product.category_name ??
+                                                                'Tanpa Kategori'}
+                                                        </span>
+                                                        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                                            {product.name}
+                                                        </h3>
+                                                        <div className="mt-auto text-base font-semibold text-teal-600 dark:text-teal-300">
+                                                            {formatCurrency(product.price)}
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    {/* Desktop - List view when viewMode is list, hidden on mobile */}
+                                    <div className={`hidden lg:space-y-3 lg:flex lg:flex-col ${viewMode === 'list' ? 'lg:block' : ''}`}>
+                                        {filteredProducts.map((product) => {
+                                            const quantityInOrder = orderQuantities[product.id] ?? 0;
+                                            const quantityBadge = quantityInOrder > 0 ? (
+                                                <span className="absolute right-2 top-2 inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm dark:bg-teal-500/90">
+                                                    {quantityInOrder}x
+                                                </span>
+                                            ) : null;
+
+                                            return (
+                                                <article
+                                                    key={product.id}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => handleAddProduct(product)}
+                                                    onKeyDown={(event) => {
+                                                        if (
+                                                            event.key === 'Enter' ||
+                                                            event.key === ' '
+                                                        ) {
+                                                            event.preventDefault();
+                                                            handleAddProduct(product);
+                                                        }
+                                                    }}
+                                                    className="group relative flex select-none items-stretch gap-4 overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-md focus:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-teal-400/40 dark:focus-visible:border-teal-300 dark:focus-visible:ring-teal-400/40"
+                                                >
+                                                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900/40">
+                                                        {quantityBadge}
+                                                        {product.photo_url ? (
+                                                            <img
+                                                                src={product.photo_url}
+                                                                alt={product.name}
+                                                                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-xs text-slate-400 dark:text-slate-500">
+                                                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary shadow-sm dark:bg-teal-400/10 dark:text-teal-300">
+                                                                    {product.name
+                                                                        ?.charAt(0)
+                                                                        ?.toUpperCase() ?? '?'}
+                                                                </span>
+                                                                <p className="text-[10px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
+                                                                    Tidak ada foto
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-1 flex-col justify-between py-1">
+                                                        <div>
                                                             <span className="text-[11px] font-semibold tracking-wide text-primary uppercase dark:text-teal-300">
                                                                 {product.category_name ??
                                                                     'Tanpa Kategori'}
                                                             </span>
-                                                            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                                            <h3 className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
                                                                 {product.name}
                                                             </h3>
-                                                            <div className="mt-auto text-base font-semibold text-teal-600 dark:text-teal-300">
+                                                        </div>
+                                                        <div className="mt-3 flex items-center justify-between">
+                                                            <span className="text-base font-semibold text-teal-600 dark:text-teal-300">
                                                                 {formatCurrency(product.price)}
-                                                            </div>
+                                                            </span>
+                                                            <span className="text-xs text-slate-400 dark:text-slate-400">
+                                                                Ketuk untuk tambah
+                                                            </span>
                                                         </div>
-                                                    </article>
-                                                );
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {filteredProducts.map((product) => {
-                                                const quantityInOrder =
-                                                    orderQuantities[product.id] ?? 0;
-                                                const quantityBadge =
-                                                    quantityInOrder > 0 ? (
-                                                        <span className="absolute right-2 top-2 inline-flex items-center rounded-full bg-primary/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm dark:bg-teal-500/90">
-                                                            {quantityInOrder}x
-                                                        </span>
-                                                    ) : null;
-
-                                                return (
-                                                    <article
-                                                        key={product.id}
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onClick={() => handleAddProduct(product)}
-                                                        onKeyDown={(event) => {
-                                                            if (
-                                                                event.key === 'Enter' ||
-                                                                event.key === ' '
-                                                            ) {
-                                                                event.preventDefault();
-                                                                handleAddProduct(product);
-                                                            }
-                                                        }}
-                                                        className="group relative flex select-none items-stretch gap-4 overflow-hidden rounded-xl border border-slate-200/70 bg-white/90 p-3 shadow-sm transition hover:-translate-y-1 hover:border-primary/40 hover:shadow-md focus:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-teal-400/40 dark:focus-visible:border-teal-300 dark:focus-visible:ring-teal-400/40"
-                                                    >
-                                                        <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-900/40">
-                                                            {quantityBadge}
-                                                            {product.photo_url ? (
-                                                                <img
-                                                                    src={product.photo_url}
-                                                                    alt={product.name}
-                                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                                                                />
-                                                            ) : (
-                                                                <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-                                                                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary shadow-sm dark:bg-teal-400/10 dark:text-teal-300">
-                                                                        {product.name
-                                                                            ?.charAt(0)
-                                                                            ?.toUpperCase() ?? '?'}
-                                                                    </span>
-                                                                    <p className="text-[10px] tracking-wide text-slate-400 uppercase dark:text-slate-500">
-                                                                        Tidak ada foto
-                                                                    </p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex flex-1 flex-col justify-between py-1">
-                                                            <div>
-                                                                <span className="text-[11px] font-semibold tracking-wide text-primary uppercase dark:text-teal-300">
-                                                                    {product.category_name ??
-                                                                        'Tanpa Kategori'}
-                                                                </span>
-                                                                <h3 className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                                                    {product.name}
-                                                                </h3>
-                                                            </div>
-                                                            <div className="mt-3 flex items-center justify-between">
-                                                                <span className="text-base font-semibold text-teal-600 dark:text-teal-300">
-                                                                    {formatCurrency(product.price)}
-                                                                </span>
-                                                                <span className="text-xs text-slate-400 dark:text-slate-400">
-                                                                    Ketuk untuk tambah
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </article>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                                    </div>
+                                                </article>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -1013,18 +1037,28 @@ export default function CashierIndex({
                     </aside>
                 </div>
 
-                <div className="lg:hidden">
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-10 bg-white/90 backdrop-blur-sm p-3 border-t border-slate-200 dark:bg-slate-900/80 dark:border-slate-700">
                     <button
                         type="button"
                         onClick={() => setIsSummaryOpen((state) => !state)}
-                        className="flex w-full items-center justify-between rounded-2xl bg-white/80 px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:text-primary hover:ring-primary/40 dark:bg-slate-900/60 dark:text-slate-200 dark:ring-slate-700"
+                        className="flex w-full items-center justify-between rounded-2xl bg-primary/10 border border-primary/20 px-4 py-3 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary/20 dark:border-teal-400/30 dark:bg-teal-400/10 dark:text-teal-300 dark:hover:bg-teal-400/20"
                     >
-                        <span>Daftar Pesanan</span>
-                        <MoreHorizontal className="h-5 w-5" />
+                        <div className="flex items-center gap-2">
+                            <span>Daftar Pesanan</span>
+                            <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full dark:bg-teal-500 dark:text-white">
+                                {orders.length}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-base font-bold text-slate-700 dark:text-slate-200">
+                                {formatCurrency(total)}
+                            </span>
+                            <MoreHorizontal className="h-5 w-5" />
+                        </div>
                     </button>
                     {isSummaryOpen && (
                         <OrderSummary
-                            className="mt-3"
+                            className="mt-3 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-lg"
                             orders={orders}
                             subtotal={subtotal}
                             discountAmount={discountAmount}
