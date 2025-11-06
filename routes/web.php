@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
                 });
             Route::get('/create', 'create')->name('create');
             Route::post('/', 'store')->name('store');
-            Route::prefix('{branch}')->group(function () {
+            Route::prefix('{branch}')->middleware('branch.owner')->group(function () {
                 Route::get('/edit', 'edit')->name('edit');
                 Route::put('/', 'update')->name('update');
                 Route::delete('/', 'destroy')->name('destroy');

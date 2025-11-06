@@ -9,10 +9,11 @@ use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 
 use App\Http\Middleware\BusinessMultiRoleMiddleware;
 use App\Http\Middleware\BusinessDataOwner;
+use App\Http\Middleware\BranchDataOwner;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/..//routes/web.php',
+        web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => BusinessMultiRoleMiddleware::class,
             'business.owner' => BusinessDataOwner::class,
+            'branch.owner' => BranchDataOwner::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
