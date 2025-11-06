@@ -11,16 +11,14 @@ use App\Http\Requests\Common\DatatableRequest;
 
 class BusinessDatatableService {
     private function getStartedQuery(DatatableRequest $request, $loggedUser){
-        $query = Business::whereUserId($loggedUser->id);
+        $query = Business::whereOwnerId($loggedUser->id);
 
         // Handle sorting
         $sortColumn = $request->input('sort_by', 'name');
         $sortDirection = $request->input('sort_direction', 'asc');
 
         // Validate sort column to prevent injection
-        $allowedSortColumns = [
-            'name', 'description'
-        ];
+        $allowedSortColumns = ['name', 'description'];
 
         if (in_array($sortColumn, $allowedSortColumns)) {
             $query->orderBy($sortColumn, $sortDirection);
@@ -28,14 +26,11 @@ class BusinessDatatableService {
             $query->orderBy("name", "asc");
         }
 
-        if($request->search){
+        $query->when($request->search, function($query, $search){
             $query->where(function($query) use($request){
-                $query->where("name", "like", "%$request->search%")
-                    ->orWhere("description", "like", "%$request->search%");
+                $query->where("name", "like", "%$request->search%")->orWhere("description", "like", "%$request->search%");
             });
-        }
-
-        $query->when($request->name, function($query, $search){
+        })->when($request->name, function($query, $search){
             $query->where("name", "like", "%{$search}%");
         })->when($request->description, function($query, $search){
             $query->where("description", "like", "%{$search}%");

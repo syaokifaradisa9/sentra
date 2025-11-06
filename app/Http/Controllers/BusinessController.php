@@ -145,7 +145,7 @@ class BusinessController extends Controller
 
     private function ensureBusinessOwner(Business $business): void
     {
-        abort_if($business->user_id !== $this->loggedUser->id, 403);
+        abort_if($business->owner_id !== $this->loggedUser->id, 403);
     }
 }
 

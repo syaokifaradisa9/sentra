@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Business;
 use App\Models\Branch;
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -28,7 +27,7 @@ class DatabaseSeeder extends Seeder
 
         $business = Business::firstOrCreate(
             [
-                'user_id' => $user->id,
+                'owner_id' => $user->id,
                 'name' => 'Sentra Kuliner',
             ],
             [
@@ -39,7 +38,7 @@ class DatabaseSeeder extends Seeder
         Branch::firstOrCreate(
             [
                 'business_id' => $business->id,
-                'user_id' => $user->id,
+                'owner_id' => $user->id,
                 'name' => 'Cabang Utama',
             ],
             [

@@ -62,7 +62,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/store', 'store')->name('store');
             Route::prefix('{business}')->group(function () {
                 Route::get('/edit', 'edit')->name('edit');
-                Route::post('/update', 'update')->name('update');
+                Route::put('/update', 'update')->name('update');
                 Route::delete('/delete', 'destroy')->name('delete');
             });
             Route::get('/datatable', 'datatable')->name('datatable');
