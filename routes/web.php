@@ -61,7 +61,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
             Route::post('/store', 'store')->name('store');
-            Route::prefix('{business}')->group(function () {
+            Route::prefix('{business}')->middleware('business.owner')->group(function () {
                 Route::get('/edit', 'edit')->name('edit');
                 Route::put('/update', 'update')->name('update');
                 Route::delete('/delete', 'destroy')->name('delete');
