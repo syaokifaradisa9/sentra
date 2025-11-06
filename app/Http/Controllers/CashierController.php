@@ -18,19 +18,25 @@ class CashierController extends Controller
     {
         $userId = auth()->id();
 
+        $productCollection = $this->productService->getByOwnerId($userId);
+
+        $categoryProductCounts = $productCollection
+            ->groupBy('category_id')
+            ->map->count();
+
         $categories = $this->categoryService
-            ->getForExport([], $userId)
-            ->map(static function ($category) {
+            ->getByOwnerId($userId)
+            ->map(static function ($category) use ($categoryProductCounts) {
                 return [
                     'id' => $category->id,
                     'name' => $category->name,
                     'icon' => $category->icon,
+                    'product_count' => $categoryProductCounts->get($category->id, 0),
                 ];
             })
             ->values();
 
-        $products = $this->productService
-            ->getForExport([], $userId)
+        $products = $productCollection
             ->map(static function ($product) {
                 return [
                     'id' => $product->id,
@@ -47,6 +53,7 @@ class CashierController extends Controller
         return Inertia::render('cashier/Index', [
             'categories' => $categories,
             'products' => $products,
+            'total_products' => $products->count(),
         ]);
     }
 }

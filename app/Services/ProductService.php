@@ -8,7 +8,6 @@ use App\Repositories\Branch\BranchRepository;
 use App\Repositories\Category\CategoryRepository;
 use App\Repositories\Product\ProductRepository;
 use App\Repositories\ProductBranch\ProductBranchRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -129,6 +128,11 @@ class ProductService
 
             return $deleted;
         });
+    }
+
+    public function getByOwnerId(int $userId): Collection
+    {
+        return $this->productRepository->getForUser($userId, []);
     }
 
     private function syncProductBranches(int $productId, array $branchIds): void
