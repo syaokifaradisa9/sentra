@@ -11,7 +11,7 @@ class Branch extends Model
 
     protected $fillable = [
         'business_id',
-        'user_id',
+        'owner_id',
         'name',
         'address',
         'opening_time',
@@ -28,8 +28,8 @@ class Branch extends Model
         return $this->belongsTo(Business::class);
     }
 
-    public function user()
+    public function owner()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'owner_id');
     }
 }

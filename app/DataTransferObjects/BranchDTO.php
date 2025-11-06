@@ -35,7 +35,7 @@ class BranchDTO
     {
         return [
             'business_id' => $this->businessId,
-            'user_id' => $this->userId,
+            'owner_id' => $this->userId,
             'name' => $this->name,
             'address' => $this->address,
             'opening_time' => $this->openingTime,

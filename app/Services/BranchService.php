@@ -2,13 +2,11 @@
 
 namespace App\Services;
 
-use App\DataTransferObjects\BranchDTO;
 use App\Models\Branch;
+use Illuminate\Support\Collection;
+use App\DataTransferObjects\BranchDTO;
 use App\Repositories\Branch\BranchRepository;
 use App\Repositories\Business\BusinessRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Validation\ValidationException;
 
 class BranchService
 {
@@ -20,7 +18,7 @@ class BranchService
     public function listForUser(int $userId): Collection
     {
         return $this->branchRepository
-            ->getByUserId($userId)
+            ->getByOwnerId($userId)
             ->load('business');
     }
 
@@ -28,7 +26,7 @@ class BranchService
     {
         $branch = $this->branchRepository->getById($id);
 
-        if (! $branch || $branch->user_id !== $userId) {
+        if (! $branch || $branch->owner_id !== $userId) {
             return null;
         }
 
@@ -37,8 +35,6 @@ class BranchService
 
     public function store(BranchDTO $branchDTO): Branch
     {
-        $this->assertBusinessOwnership($branchDTO->businessId, $branchDTO->userId);
-
         $branch = $this->branchRepository->store($branchDTO->toArray());
 
         return $branch->load('business');
@@ -48,11 +44,9 @@ class BranchService
     {
         $branch = $this->branchRepository->getById($id);
 
-        if (! $branch || $branch->user_id !== $branchDTO->userId) {
+        if (! $branch || $branch->owner_id !== $branchDTO->userId) {
             return null;
         }
-
-        $this->assertBusinessOwnership($branchDTO->businessId, $branchDTO->userId);
 
         $updated = $this->branchRepository->update($id, $branchDTO->toArray());
 
@@ -63,7 +57,7 @@ class BranchService
     {
         $branch = $this->branchRepository->getById($id);
 
-        if (! $branch || $branch->user_id !== $userId) {
+        if (! $branch || $branch->owner_id !== $userId) {
             return false;
         }
 
@@ -72,25 +66,6 @@ class BranchService
 
     public function getBusinessesForUser(int $userId): Collection
     {
-        return $this->businessRepository->getByUserId($userId);
-    }
-
-    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
-    {
-        return $this->branchRepository->paginateForUser($filters, $userId);
-    }
-
-    public function getForExport(array $filters, int $userId): Collection
-    {
-        return $this->branchRepository->getForExport($filters, $userId);
-    }
-
-    private function assertBusinessOwnership(int $businessId, int $userId): void
-    {
-        if (! $this->businessRepository->existsForUser($businessId, $userId)) {
-            throw ValidationException::withMessages([
-                'business_id' => 'Bisnis tidak valid untuk pengguna ini.',
-            ]);
-        }
+        return $this->businessRepository->getByOwnerId($userId);
     }
 }
