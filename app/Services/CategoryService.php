@@ -66,37 +66,12 @@ class CategoryService
         });
     }
 
-    public function getBranchesForUser(int $userId): Collection
-    {
-        return $this->branchRepository->getByUserId($userId);
-    }
-
-    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
-    {
-        $branchIds = $this->branchRepository
-            ->getByUserId($userId)
-            ->pluck('id')
-            ->toArray();
-
-        return $this->categoryRepository->paginateForBranchIds($branchIds, $filters);
-    }
-
-    public function getForExport(array $filters, int $userId): Collection
-    {
-        $branchIds = $this->branchRepository
-            ->getByUserId($userId)
-            ->pluck('id')
-            ->toArray();
-
-        return $this->categoryRepository->getForBranchIds($branchIds, $filters);
-    }
-
-    private function syncCategoryBranches(int $categoryId, array $branchIds, int $userId): void
+    private function syncCategoryBranches(int $categoryId, array $branchIds, int $ownerId): void
     {
         $branchIds = array_unique(array_map('intval', $branchIds));
 
         $userBranchIds = $this->branchRepository
-            ->getByUserId($userId)
+            ->getByOwnerId($ownerId)
             ->pluck('id')
             ->toArray();
 
