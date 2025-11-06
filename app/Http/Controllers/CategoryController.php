@@ -116,14 +116,20 @@ class CategoryController extends Controller
         }
     }
 
-    public function datatable(DatatableRequest $request): JsonResponse
+    public function datatable(DatatableRequest $request)
     {
         return $this->categoryDatatable->getDatatable($request, $this->loggedUser);
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        return $this->categoryDatatable->printPdf($request, $this->loggedUser);
+        $pdfContent =  $this->categoryDatatable->printPdf($request, $this->loggedUser);
+        $fileName = 'Laporan Kategori Per ' . date("d F Y") . '.pdf';
+
+        return response()->make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     public function printExcel(DatatableRequest $request)

@@ -53,6 +53,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProductSeeder::class,
             BusinessmanUserSeeder::class,
+            CategoryBusinessmanSeeder::class,
             BusinessOwnerUserSeeder::class,
             SmallBusinessOwnerUserSeeder::class,
         ]);

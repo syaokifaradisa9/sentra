@@ -26,33 +26,29 @@ class CategoryService
     public function getById(int $id): ?Category
     {
         $category = $this->categoryRepository->getById($id);
-
         return $category?->load('branches');
     }
 
-    public function store(CategoryDTO $dto, int $userId): Category
+    public function store(CategoryDTO $dto): Category
     {
-        return DB::transaction(function () use ($dto, $userId) {
+        return DB::transaction(function () use ($dto) {
             $category = $this->categoryRepository->store($dto->toArray());
-
-            $this->syncCategoryBranches($category->id, $dto->branchIds, $userId);
+            $this->syncCategoryBranches($category->id, $dto->branchIds);
 
             return $category->load('branches');
         });
     }
 
-    public function update(int $id, CategoryDTO $dto, int $userId): ?Category
+    public function update(int $id, CategoryDTO $dto): ?Category
     {
-        return DB::transaction(function () use ($id, $dto, $userId) {
-            $category = $this->categoryRepository->update($id, $dto->toArray());
+        return DB::transaction(function () use ($id, $dto) {
+            $this->categoryRepository->update($id, [
+                'name' => $dto->name
+            ]);
+            
+            $this->syncCategoryBranches($id, $dto->branchIds);
 
-            if (! $category) {
-                return null;
-            }
-
-            $this->syncCategoryBranches($id, $dto->branchIds, $userId);
-
-            return $category->load('branches');
+            return $this->categoryRepository->getById($id)?->load('branches');
         });
     }
 
@@ -65,32 +61,16 @@ class CategoryService
         });
     }
 
-    private function syncCategoryBranches(int $categoryId, array $branchIds, int $ownerId): void
+    private function syncCategoryBranches(int $categoryId, array $branchIds): void
     {
-        $branchIds = array_unique(array_map('intval', $branchIds));
-
-        $userBranchIds = $this->branchRepository
-            ->getByOwnerId($ownerId)
-            ->pluck('id')
-            ->toArray();
-
-        $validBranchIds = array_values(array_intersect($userBranchIds, $branchIds));
-
         $this->categoryBranchRepository->deleteByCategoryId($categoryId);
 
-        if (empty($validBranchIds)) {
-            return;
-        }
-
-        $timestamp = now();
-        $payload = array_map(static function (int $branchId) use ($categoryId, $timestamp) {
+        $payload = array_map(static function (int $branchId) use ($categoryId) {
             return [
                 'category_id' => $categoryId,
                 'branch_id' => $branchId,
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
             ];
-        }, $validBranchIds);
+        }, $branchIds);
 
         $this->categoryBranchRepository->batchInsert($payload);
     }
