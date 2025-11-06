@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('branches')
         ->controller(BranchController::class)
         ->as('branches.')
+        ->middleware("roles:Businessman,Businessowner")
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/datatable', 'datatable')->name('datatable');

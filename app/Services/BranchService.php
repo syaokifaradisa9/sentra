@@ -18,37 +18,18 @@ class BranchService
     public function store(BranchDTO $branchDTO): Branch
     {
         $branch = $this->branchRepository->store($branchDTO->toArray());
-
         return $branch->load('business');
     }
 
     public function update(int $id, BranchDTO $branchDTO): ?Branch
     {
-        $branch = $this->branchRepository->getById($id);
-
-        if (! $branch || $branch->owner_id !== $branchDTO->userId) {
-            return null;
-        }
-
         $updated = $this->branchRepository->update($id, $branchDTO->toArray());
-
         return $updated?->load('business');
     }
 
-    public function delete(int $id, int $userId): bool
+    public function delete(int $id): bool
     {
-        $branch = $this->branchRepository->getById($id);
-
-        if (! $branch || $branch->owner_id !== $userId) {
-            return false;
-        }
-
         return $this->branchRepository->delete($id);
-    }
-
-    public function getBranchesForUser(int $userId): Collection
-    {
-        return $this->branchRepository->getByOwnerId($userId);
     }
 
     public function getAllBranches(): Collection

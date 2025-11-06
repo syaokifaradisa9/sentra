@@ -8,6 +8,7 @@ use App\Http\Requests\BranchRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Branch;
 use App\Services\BranchService;
+use App\Services\BusinessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,8 @@ class BranchController extends Controller
     private $loggedUser;
     public function __construct(
         private BranchService $branchService,
-        private BranchDatatableService $branchDatatable
+        private BranchDatatableService $branchDatatable,
+        private BusinessService $businessService
     ) {
         $this->loggedUser = Auth::user();
     }
@@ -34,13 +36,15 @@ class BranchController extends Controller
     public function create(): InertiaResponse
     {
         return Inertia::render('branch/Create', [
-            'businesses' => $this->businessOptions(),
+            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id)
         ]);
     }
 
     public function datatable(DatatableRequest $request): JsonResponse
     {
-        return $this->branchDatatable->getDatatable($request, $this->loggedUser);
+        $paginator =  $this->branchDatatable->getDatatable($request, $this->loggedUser);
+
+        return response()->json($paginator);
     }
 
     public function store(BranchRequest $request): RedirectResponse
@@ -60,50 +64,22 @@ class BranchController extends Controller
 
     public function show(Branch $branch): InertiaResponse
     {
-        $this->ensureBranchOwner($branch);
-
-        $branchData = $this->branchService->getForUser($branch->id, $this->loggedUser->id);
-
-        abort_unless($branchData, 404);
-
         return Inertia::render('branch/Detail', [
-            'branch' => [
-                'id' => $branchData->id,
-                'name' => $branchData->name,
-                'address' => $branchData->address,
-                'business_id' => $branchData->business_id,
-                'opening_time' => optional($branchData->opening_time)->format('H:i'),
-                'closing_time' => optional($branchData->closing_time)->format('H:i'),
-            ],
+            'branch' => $branch,
         ]);
     }
 
     public function edit(Branch $branch): InertiaResponse
     {
-        $this->ensureBranchOwner($branch);
-
-        $branchData = $this->branchService->getForUser($branch->id, $this->loggedUser->id);
-
-        abort_unless($branchData, 404);
-
         return Inertia::render('branch/Edit', [
-            'branch' => [
-                'id' => $branchData->id,
-                'name' => $branchData->name,
-                'address' => $branchData->address,
-                'business_id' => $branchData->business_id,
-                'opening_time' => optional($branchData->opening_time)->format('H:i'),
-                'closing_time' => optional($branchData->closing_time)->format('H:i'),
-            ],
-            'businesses' => $this->businessOptions(),
+            'branch' => $branch,
+            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id)
         ]);
     }
 
     public function update(BranchRequest $request, Branch $branch): RedirectResponse
     {
         try {
-            $this->ensureBranchOwner($branch);
-
             $updated = $this->branchService->update($branch->id, BranchDTO::fromAppRequest($request));
 
             if (! $updated) {
@@ -123,9 +99,7 @@ class BranchController extends Controller
     public function destroy(Branch $branch): RedirectResponse
     {
         try {
-            $this->ensureBranchOwner($branch);
-
-            $deleted = $this->branchService->delete($branch->id, $this->loggedUser->id);
+            $deleted = $this->branchService->delete($branch->id);
 
             if ($deleted) {
                 return to_route('branches.index')->with('success', 'Cabang berhasil dihapus');
@@ -141,27 +115,17 @@ class BranchController extends Controller
 
     public function printPdf(DatatableRequest $request)
     {
-        return $this->branchDatatable->printPdf($request, $this->loggedUser);
+        $pdfContent =  $this->branchDatatable->printPdf($request, $this->loggedUser);
+        $fileName = 'laporan-bisnis-' . now()->format('Ymd_His') . '.pdf';
+
+        return response()->make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     public function printExcel(DatatableRequest $request)
     {
         return $this->branchDatatable->printExcel($request, $this->loggedUser);
-    }
-
-    private function businessOptions()
-    {
-        return $this->branchService
-            ->getBusinessesForUser($this->loggedUser->id)
-            ->map(static fn ($business) => [
-                'id' => $business->id,
-                'name' => $business->name,
-            ])
-            ->values();
-    }
-
-    private function ensureBranchOwner(Branch $branch): void
-    {
-        abort_if($branch->owner_id !== $this->loggedUser->id, 403);
     }
 }
