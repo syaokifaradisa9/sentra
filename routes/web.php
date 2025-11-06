@@ -75,42 +75,6 @@ Route::middleware('auth')->group(function () {
                 });
         });
 
-    // Example route group for BusinessOwner-specific features (only BusinessOwner)
-    Route::middleware('role:businessowner')
-        ->prefix('business-owner')
-        ->as('businessowner.')
-        ->group(function () {
-            Route::get('/', function () {
-                return inertia('business-owner/Dashboard', [
-                    'message' => 'Halo Business Owner! Anda memiliki akses ke fitur khusus.'
-                ]);
-            })->name('dashboard');
-            
-            Route::get('/reports', function () {
-                return inertia('business-owner/Reports', [
-                    'message' => 'Laporan khusus untuk Business Owner'
-                ]);
-            })->name('reports');
-        });
-
-    // Example route group for features accessible by both Businessman and BusinessOwner
-    Route::middleware('role:businessman,businessowner')
-        ->prefix('business-multi')
-        ->as('businessmulti.')
-        ->group(function () {
-            Route::get('/', function () {
-                return inertia('business-multi/Dashboard', [
-                    'message' => 'Halo Businessman dan Business Owner! Anda memiliki akses ke fitur bersama.'
-                ]);
-            })->name('dashboard');
-            
-            Route::get('/analytics', function () {
-                return inertia('business-multi/Analytics', [
-                    'message' => 'Analitik bisnis untuk Businessman dan BusinessOwner'
-                ]);
-            })->name('analytics');
-        });
-
     Route::prefix('categories')
         ->controller(CategoryController::class)
         ->as('categories.')
