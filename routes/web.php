@@ -46,22 +46,22 @@ Route::middleware('auth')->group(function () {
                 });
             Route::get('/create', 'create')->name('create');
             Route::post('/', 'store')->name('store');
-            Route::prefix('{branch}')->middleware('branch.owner')->group(function () {
+            Route::prefix('{branch}')->group(function () {
                 Route::get('/edit', 'edit')->name('edit');
                 Route::put('/', 'update')->name('update');
                 Route::delete('/', 'destroy')->name('destroy');
             });
         });
 
-    Route::middleware('role:businessman')
-        ->prefix('business')
+    Route::prefix('business')
         ->controller(BusinessController::class)
         ->as('business.')
+        ->middleware("roles:Businessman")
         ->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
             Route::post('/store', 'store')->name('store');
-            Route::prefix('{business}')->middleware('business.owner')->group(function () {
+            Route::prefix('{business}')->group(function () {
                 Route::get('/edit', 'edit')->name('edit');
                 Route::put('/update', 'update')->name('update');
                 Route::delete('/delete', 'destroy')->name('delete');

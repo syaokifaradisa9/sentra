@@ -15,10 +15,6 @@ class BusinessmanUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get the Businessman role
-        $businessmanRole = Role::firstOrCreate(['name' => 'Businessman']);
-
-        // Create a new user with the Businessman role
         $businessmanUser = User::create([
             'name' => 'Businessman User',
             'email' => 'businessman@example.com',
@@ -29,7 +25,7 @@ class BusinessmanUserSeeder extends Seeder
         ]);
 
         // Assign the Businessman role to the user
-        $businessmanUser->assignRole($businessmanRole);
+        $businessmanUser->assignRole("Businessman");
 
         // Create a business owned by this businessman
         $business = Business::create([

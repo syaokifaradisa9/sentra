@@ -2,14 +2,11 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RolesCheckMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
-
-use App\Http\Middleware\BusinessMultiRoleMiddleware;
-use App\Http\Middleware\BusinessDataOwner;
-use App\Http\Middleware\BranchDataOwner;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,9 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => BusinessMultiRoleMiddleware::class,
-            'business.owner' => BusinessDataOwner::class,
-            'branch.owner' => BranchDataOwner::class,
+            'roles' => RolesCheckMiddleware::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
