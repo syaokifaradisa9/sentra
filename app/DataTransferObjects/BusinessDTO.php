@@ -28,7 +28,7 @@ class BusinessDTO
     public function toArray(): array
     {
         return [
-            'user_id' => $this->userId,
+            'owner_id' => $this->userId,
             'name' => $this->name,
             'description' => $this->description,
         ];

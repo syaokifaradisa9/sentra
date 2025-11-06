@@ -5,7 +5,6 @@ namespace App\Services;
 use App\DataTransferObjects\BusinessDTO;
 use App\Models\Business;
 use App\Repositories\Business\BusinessRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class BusinessService
@@ -14,25 +13,9 @@ class BusinessService
         private BusinessRepository $businessRepository,
     ) {}
 
-    public function listForUser(int $userId): Collection
+    public function getByOwnerId(int $userId): Collection
     {
-        return $this->businessRepository->getByUserId($userId);
-    }
-
-    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
-    {
-        return $this->businessRepository->paginateForUser($filters, $userId);
-    }
-
-    public function getForUser(int $id, int $userId): ?Business
-    {
-        $business = $this->businessRepository->getById($id);
-
-        if (! $business || $business->user_id !== $userId) {
-            return null;
-        }
-
-        return $business;
+        return $this->businessRepository->getByOwnerId($userId);
     }
 
     public function store(BusinessDTO $businessDTO): Business
@@ -44,7 +27,7 @@ class BusinessService
     {
         $business = $this->businessRepository->getById($id);
 
-        if (! $business || $business->user_id !== $businessDTO->userId) {
+        if (! $business || $business->owner_id !== $businessDTO->userId) {
             return null;
         }
 
@@ -55,15 +38,10 @@ class BusinessService
     {
         $business = $this->businessRepository->getById($id);
 
-        if (! $business || $business->user_id !== $userId) {
+        if (! $business || $business->owner_id !== $userId) {
             return false;
         }
 
         return $this->businessRepository->delete($id);
-    }
-
-    public function getForExport(array $filters, int $userId): Collection
-    {
-        return $this->businessRepository->getForExport($filters, $userId);
     }
 }

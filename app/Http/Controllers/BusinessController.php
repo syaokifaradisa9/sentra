@@ -2,28 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Datatables\BusinessDatatableService;
 use App\DataTransferObjects\BusinessDTO;
 use App\Http\Requests\BusinessRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Business;
 use App\Services\BusinessService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Throwable;
 
 class BusinessController extends Controller
 {
+    private $loggedUser;
     public function __construct(
         private BusinessService $businessService,
-    ) {}
+        private BusinessDatatableService $businessDatatable
+    ) {
+        $this->loggedUser = Auth::user();
+    }
 
     public function index(): InertiaResponse
     {
@@ -105,7 +106,7 @@ class BusinessController extends Controller
         try {
             $this->ensureBusinessOwner($business);
 
-            $deleted = $this->businessService->delete($business->id, auth()->id());
+            $deleted = $this->businessService->delete($business->id, $this->loggedUser->id);
 
             if ($deleted) {
                 return to_route('business.index')->with('success', 'Bisnis berhasil dihapus');
@@ -119,64 +120,32 @@ class BusinessController extends Controller
         }
     }
 
-    public function datatable(Request $request): JsonResponse
+    public function datatable(DatatableRequest $request): JsonResponse
     {
-        $paginator = $this->businessService->paginateForUser($request->all(), auth()->id());
+        $paginator = $this->businessDatatable->getDatatable($request, $this->loggedUser);
 
         return response()->json($paginator);
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        $records = $this->businessService->getForExport($request->validated(), auth()->id());
-
-        $pdf = Pdf::loadView('reports.business', [
-            'records' => $records,
-        ])->setPaper('A4', 'landscape');
-
+        $pdfContent = $this->businessDatatable->printPdf($request, $this->loggedUser);
         $fileName = 'laporan-bisnis-' . now()->format('Ymd_His') . '.pdf';
 
-        return $pdf->stream($fileName);
+        return response()->make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     public function printExcel(DatatableRequest $request)
     {
-        $records = $this->businessService->getForExport($request->validated(), auth()->id());
-
-        $spreadsheet = new Spreadsheet();
-        $worksheet = $spreadsheet->getActiveSheet();
-
-        $headers = ['No', 'Nama Bisnis', 'Deskripsi'];
-        foreach ($headers as $index => $header) {
-            $columnLetter = chr(65 + $index);
-            $worksheet->setCellValue("{$columnLetter}1", $header);
-            $worksheet->getStyle("{$columnLetter}1")->getAlignment()->setHorizontal('center')->setVertical('center');
-            $worksheet->getColumnDimension($columnLetter)->setAutoSize(true);
-        }
-
-        foreach ($records as $rowIndex => $record) {
-            $rowNumber = $rowIndex + 2;
-            $worksheet->setCellValue("A{$rowNumber}", $rowIndex + 1);
-            $worksheet->setCellValue("B{$rowNumber}", $record->name);
-            $worksheet->setCellValue("C{$rowNumber}", $record->description ?: '-');
-            $worksheet->getStyle("A{$rowNumber}")
-                ->getAlignment()
-                ->setHorizontal('center')
-                ->setVertical('center');
-        }
-
-        $fileName = 'Laporan Data Bisnis Per ' . now()->format('d F Y') . '.xlsx';
-        $filePath = storage_path('app/public/' . $fileName);
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($filePath);
-
-        return Response::download($filePath)->deleteFileAfterSend(true);
+        return $this->businessDatatable->printExcel($request, $this->loggedUser);
     }
 
     private function ensureBusinessOwner(Business $business): void
     {
-        abort_if($business->user_id !== auth()->id(), 403);
+        abort_if($business->user_id !== $this->loggedUser->id, 403);
     }
 }
 

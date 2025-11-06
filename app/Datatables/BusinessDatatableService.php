@@ -7,10 +7,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use App\Http\Requests\Common\DatatableRequest;
 
-class BusinessDatatable {
+class BusinessDatatableService {
     private function getStartedQuery(DatatableRequest $request, $loggedUser){
         $query = Business::whereUserId($loggedUser->id);
 
