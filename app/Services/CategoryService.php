@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Repositories\Branch\BranchRepository;
 use App\Repositories\Category\CategoryRepository;
 use App\Repositories\CategoryBranch\CategoryBranchRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
