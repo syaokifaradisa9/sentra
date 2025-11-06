@@ -15,24 +15,6 @@ class BranchService
         private BusinessRepository $businessRepository,
     ) {}
 
-    public function listForUser(int $userId): Collection
-    {
-        return $this->branchRepository
-            ->getByOwnerId($userId)
-            ->load('business');
-    }
-
-    public function getForUser(int $id, int $userId): ?Branch
-    {
-        $branch = $this->branchRepository->getById($id);
-
-        if (! $branch || $branch->owner_id !== $userId) {
-            return null;
-        }
-
-        return $branch->load('business');
-    }
-
     public function store(BranchDTO $branchDTO): Branch
     {
         $branch = $this->branchRepository->store($branchDTO->toArray());
@@ -64,8 +46,30 @@ class BranchService
         return $this->branchRepository->delete($id);
     }
 
-    public function getBusinessesForUser(int $userId): Collection
+    public function getBranchesForUser(int $userId): Collection
     {
-        return $this->businessRepository->getByOwnerId($userId);
+        return $this->branchRepository->getByOwnerId($userId);
+    }
+
+    public function getAllBranches(): Collection
+    {
+        return $this->branchRepository->all();
+    }
+
+    public function getById(int $id): ?Branch
+    {
+        return $this->branchRepository->getById($id);
+    }
+
+    public function getOptionsDataByOwnerId(int $userId): array
+    {
+        $branches = $this->branchRepository->getByOwnerId($userId);
+        
+        return $branches->map(function ($branch) {
+            return [
+                'id' => $branch->id,
+                'name' => $branch->name,
+            ];
+        })->toArray();
     }
 }

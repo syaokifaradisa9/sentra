@@ -44,4 +44,16 @@ class BusinessService
 
         return $this->businessRepository->delete($id);
     }
+
+    public function getOptionsDataByOwnerId(int $userId): array
+    {
+        $businesses = $this->businessRepository->getByOwnerId($userId);
+        
+        return $businesses->map(function ($business) {
+            return [
+                'id' => $business->id,
+                'name' => $business->name,
+            ];
+        })->toArray();
+    }
 }
