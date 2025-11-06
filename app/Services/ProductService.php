@@ -24,35 +24,6 @@ class ProductService
         private BranchRepository $branchRepository,
     ) {}
 
-    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
-    {
-        return $this->productRepository->paginateForUser($userId, $filters);
-    }
-
-    public function getForUser(int $id, int $userId): ?Product
-    {
-        $product = $this->productRepository->getById($id);
-
-        if (! $product) {
-            return null;
-        }
-
-        $product->load(['category.branches', 'branches']);
-
-        $userBranchIds = $this->getUserBranchIds($userId);
-
-        $hasAccessibleBranch = $product->branches
-            ->pluck('id')
-            ->intersect($userBranchIds)
-            ->isNotEmpty();
-
-        if (! $hasAccessibleBranch) {
-            return null;
-        }
-
-        return $product;
-    }
-
     public function store(ProductDTO $dto, int $userId): Product
     {
         return DB::transaction(function () use ($dto, $userId) {
@@ -160,28 +131,6 @@ class ProductService
         });
     }
 
-    public function getCategoriesForUser(int $userId): Collection
-    {
-        $userBranchIds = $this->getUserBranchIds($userId);
-
-        $categories = $this->categoryRepository->all()->load('branches');
-
-        return $categories
-            ->map(function ($category) use ($userBranchIds) {
-                $category->filtered_branches = $category->branches
-                    ->filter(fn ($branch) => $userBranchIds->contains($branch->id))
-                    ->values();
-                return $category;
-            })
-            ->filter(fn ($category) => $category->filtered_branches->isNotEmpty())
-            ->values();
-    }
-
-    public function getForExport(array $filters, int $userId): Collection
-    {
-        return $this->productRepository->getForUser($userId, $filters);
-    }
-
     private function syncProductBranches(int $productId, array $branchIds): void
     {
         $this->productBranchRepository->deleteByProductId($productId);
@@ -202,26 +151,6 @@ class ProductService
         }
     }
 
-    private function validatedBranchIds(int $categoryId, array $branchIds, int $userId): array
-    {
-        $branchIds = array_map('intval', $branchIds);
-
-        $category = $this->categoryRepository->getById($categoryId);
-
-        if (! $category) {
-            throw ValidationException::withMessages([
-                'category_id' => 'Kategori tidak ditemukan.',
-            ]);
-        }
-
-        $category->load('branches');
-
-        $categoryBranchIds = $category->branches->pluck('id')->toArray();
-        $userBranchIds = $this->getUserBranchIds($userId)->toArray();
-
-        return array_values(array_intersect($branchIds, $categoryBranchIds, $userBranchIds));
-    }
-
     private function storePhoto(?UploadedFile $photo): ?string
     {
         if (! $photo) {
@@ -238,10 +167,43 @@ class ProductService
         }
     }
 
-    private function getUserBranchIds(int $userId)
+    private function validatedBranchIds(int $categoryId, array $branchIds, int $userId): array
+    {
+        if (empty($categoryId) || empty($branchIds)) {
+            return [];
+        }
+
+        $category = $this->categoryRepository
+            ->getByOwnerId($userId)
+            ->firstWhere('id', $categoryId);
+
+        if (! $category) {
+            return [];
+        }
+
+        $allowedBranchIds = $category->branches
+            ->pluck('id')
+            ->map(static fn ($id) => (int) $id)
+            ->all();
+
+        if (empty($allowedBranchIds)) {
+            return [];
+        }
+
+        return collect($branchIds)
+            ->map(static fn ($id) => (int) $id)
+            ->filter(static fn ($id) => in_array($id, $allowedBranchIds, true))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function getUserBranchIds(int $userId): array
     {
         return $this->branchRepository
-            ->getByUserId($userId)
-            ->pluck('id');
+            ->getByOwnerId($userId)
+            ->pluck('id')
+            ->map(static fn ($id) => (int) $id)
+            ->all();
     }
 }

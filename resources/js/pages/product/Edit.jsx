@@ -9,7 +9,7 @@ import FormCheckbox from "../../components/forms/FormCheckBox";
 import FormFile from "../../components/forms/FormFile";
 import Button from "../../components/buttons/Button";
 
-export default function ProductEdit({ product, categories = [] }) {
+export default function ProductEdit({ product, categories = [], categoryOptions: categoryOptionsProp = [] }) {
     const { data, setData, post, processing, errors } = useForm({
         name: product?.name ?? "",
         category_id: product?.category_id ? String(product.category_id) : "",
@@ -19,14 +19,14 @@ export default function ProductEdit({ product, categories = [] }) {
         photo: null,
     });
 
-    const categoryOptions = useMemo(
-        () =>
-            categories.map((category) => ({
-                value: category.id,
-                label: category.name,
-            })),
-        [categories]
-    );
+    const categorySelectOptions = useMemo(() => {
+        const source = categoryOptionsProp.length > 0 ? categoryOptionsProp : categories;
+
+        return source.map((category) => ({
+            value: category.id,
+            label: category.name,
+        }));
+    }, [categoryOptionsProp, categories]);
 
     const selectedCategory = useMemo(
         () => categories.find((category) => category.id === Number(data.category_id)),
@@ -34,6 +34,7 @@ export default function ProductEdit({ product, categories = [] }) {
     );
 
     const availableBranches = selectedCategory?.branches ?? [];
+    const hasSelectedCategory = Boolean(selectedCategory);
 
     const toggleBranch = (branchId) => {
         const numericId = Number(branchId);
@@ -75,7 +76,8 @@ export default function ProductEdit({ product, categories = [] }) {
 
     const onSubmit = (event) => {
         event.preventDefault();
-        post(`/products/${product.id}/update`, {
+        post(`/products/${product.id}`, {
+            _method: 'put',
             forceFormData: true,
         });
     };
@@ -88,34 +90,40 @@ export default function ProductEdit({ product, categories = [] }) {
         <RootLayout title={`Edit Produk #${product.id}`}>
             <ContentCard title={`Edit Produk #${product.id}`} backPath="/products">
                 <form onSubmit={onSubmit} className="space-y-6" encType="multipart/form-data">
-                    <FormInput
-                        label="Nama Produk"
-                        name="name"
-                        value={data.name}
-                        onChange={(event) => setData("name", event.target.value)}
-                        placeholder="Masukkan nama produk"
-                        error={errors.name}
-                        required
-                    />
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <FormInput
+                            label="Nama Produk"
+                            name="name"
+                            value={data.name}
+                            onChange={(event) => setData("name", event.target.value)}
+                            placeholder="Masukkan nama produk"
+                            error={errors.name}
+                            required
+                        />
 
-                    <FormSelect
-                        name="category_id"
-                        label="Kategori"
-                        value={data.category_id}
-                        onChange={onCategoryChange}
-                        options={categoryOptions}
-                        placeholder="Pilih kategori"
-                        error={errors.category_id}
-                        required
-                    />
+                        <FormSelect
+                            name="category_id"
+                            label="Kategori"
+                            value={data.category_id}
+                            onChange={onCategoryChange}
+                            options={categorySelectOptions}
+                            placeholder="Pilih kategori"
+                            error={errors.category_id}
+                            required
+                        />
+                    </div>
 
                     <div className="space-y-3">
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                             Cabang
                         </p>
-                        {availableBranches.length === 0 ? (
+                        {!hasSelectedCategory ? (
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 Pilih kategori untuk menampilkan cabang yang tersedia.
+                            </p>
+                        ) : availableBranches.length === 0 ? (
+                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                Tidak ada cabang yang tersedia untuk kategori ini.
                             </p>
                         ) : (
                             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

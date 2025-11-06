@@ -65,4 +65,16 @@ class EloquentCategoryRepository implements CategoryRepository
             $query->where('branches.business_id', $businessId);
         })->get();
     }
+
+    public function getByOwnerId(int $ownerId): Collection
+    {
+        return $this->model
+            ->whereHas('branches', function ($query) use ($ownerId) {
+                $query->where('owner_id', $ownerId);
+            })
+            ->with(['branches' => function ($query) use ($ownerId) {
+                $query->where('owner_id', $ownerId);
+            }])
+            ->get();
+    }
 }

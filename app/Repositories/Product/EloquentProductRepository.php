@@ -96,7 +96,7 @@ class EloquentProductRepository implements ProductRepository
             ->with(['category.branches', 'branches']);
 
         $query->whereHas('branches', function ($builder) use ($userId) {
-            $builder->where('branches.user_id', $userId);
+            $builder->where('branches.owner_id', $userId);
         });
 
         $search = $filters['search'] ?? null;

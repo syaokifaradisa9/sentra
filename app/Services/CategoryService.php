@@ -74,4 +74,21 @@ class CategoryService
 
         $this->categoryBranchRepository->batchInsert($payload);
     }
+
+    public function getByOwnerId(int $ownerId): Collection
+    {
+        return $this->categoryRepository->getByOwnerId($ownerId);
+    }
+
+    public function getOptionsByOwnerId(int $userId): array
+    {
+        $categories = $this->categoryRepository->getByOwnerId($userId);
+        
+        return $categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+            ];
+        })->toArray();
+    }
 }

@@ -39,7 +39,6 @@ class CategoryController extends Controller
     {
         return Inertia::render('category/Create', [
             'branches' => $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id),
-            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id),
         ]);
     }
 
@@ -68,12 +67,7 @@ class CategoryController extends Controller
         }
 
         return Inertia::render('category/Edit', [
-            'category' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'icon' => $category->icon,
-                'branch_ids' => $category->branches->pluck('id')->values(),
-            ],
+            'category' => $category,
             'branches' => $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id),
         ]);
     }
@@ -104,7 +98,7 @@ class CategoryController extends Controller
         try {
             $deleted = $this->categoryService->delete($category->id);
 
-            if (! $deleted) {
+            if (!$deleted) {
                 return back()->with('error', 'Gagal menghapus kategori');
             }
 

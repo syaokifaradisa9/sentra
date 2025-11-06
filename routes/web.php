@@ -113,7 +113,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/', 'store')->name('store');
             Route::prefix('{product}')->group(function () {
                 Route::get('/edit', 'edit')->name('edit');
-                Route::post('/update', 'update')->name('update');
+                Route::post('/', 'update')->name('update');
                 Route::delete('/', 'destroy')->name('destroy');
             });
         });

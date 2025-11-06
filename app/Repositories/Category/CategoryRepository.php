@@ -14,4 +14,5 @@ interface CategoryRepository
     public function all(): Collection;
     public function getByBranchId(int $branchId): Collection;
     public function getByBusinessId(int $businessId): Collection;
+    public function getByOwnerId(int $ownerId): Collection;
 }
