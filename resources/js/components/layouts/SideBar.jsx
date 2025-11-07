@@ -1,4 +1,4 @@
-import { Building, GitBranch, Home, Package, ShoppingCart, Tags, Users } from 'lucide-react';
+import { Building, GitBranch, Home, Package, Percent, ShoppingCart, Tags, Users } from 'lucide-react';
 import SidebarLink from './SideBarLink';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
@@ -80,6 +80,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                                                 name="Produk"
                                                 href="/products"
                                                 icon={Package}
+                                            />
+                                            <SidebarLink
+                                                name="Promo"
+                                                href="/promos"
+                                                icon={Percent}
                                             />
                                         </div>
                                     </div>

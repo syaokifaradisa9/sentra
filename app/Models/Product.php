@@ -30,4 +30,9 @@ class Product extends Model
     {
         return $this->belongsToMany(Branch::class, 'product_branches');
     }
+
+    public function promos()
+    {
+        return $this->hasMany(Promo::class);
+    }
 }

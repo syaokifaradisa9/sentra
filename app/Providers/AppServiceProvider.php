@@ -19,6 +19,8 @@ use App\Repositories\ProductBranch\ProductBranchRepository;
 use App\Repositories\ProductBranch\EloquentProductBranchRepository;
 use App\Repositories\UserBranch\UserBranchRepository;
 use App\Repositories\UserBranch\EloquentUserBranchRepository;
+use App\Repositories\Promo\PromoRepository;
+use App\Repositories\Promo\EloquentPromoRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -50,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
         
         // UserBranch Repository
         $this->app->singleton(UserBranchRepository::class, EloquentUserBranchRepository::class);
+
+        // Promo Repository
+        $this->app->singleton(PromoRepository::class, EloquentPromoRepository::class);
     }
 
     /**
@@ -60,4 +65,3 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 }
-
