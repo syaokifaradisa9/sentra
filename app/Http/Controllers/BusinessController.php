@@ -8,7 +8,6 @@ use App\Http\Requests\BusinessRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Business;
 use App\Services\BusinessService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -120,11 +119,9 @@ class BusinessController extends Controller
         }
     }
 
-    public function datatable(DatatableRequest $request): JsonResponse
+    public function datatable(DatatableRequest $request)
     {
-        $paginator = $this->businessDatatable->getDatatable($request, $this->loggedUser);
-
-        return response()->json($paginator);
+        return $this->businessDatatable->getDatatable($request, $this->loggedUser);
     }
 
     public function printPdf(DatatableRequest $request)

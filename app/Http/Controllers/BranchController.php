@@ -9,7 +9,6 @@ use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Branch;
 use App\Services\BranchService;
 use App\Services\BusinessService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -38,13 +37,6 @@ class BranchController extends Controller
         return Inertia::render('branch/Create', [
             'businesses' => $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id)
         ]);
-    }
-
-    public function datatable(DatatableRequest $request): JsonResponse
-    {
-        $paginator =  $this->branchDatatable->getDatatable($request, $this->loggedUser);
-
-        return response()->json($paginator);
     }
 
     public function store(BranchRequest $request): RedirectResponse
@@ -111,6 +103,11 @@ class BranchController extends Controller
 
             return back()->with('error', 'Gagal menghapus cabang');
         }
+    }
+
+    public function datatable(DatatableRequest $request)
+    {
+        return $this->branchDatatable->getDatatable($request, $this->loggedUser);
     }
 
     public function printPdf(DatatableRequest $request)

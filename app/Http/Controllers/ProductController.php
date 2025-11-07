@@ -9,7 +9,6 @@ use App\Http\Requests\ProductRequest;
 use App\Models\Product;
 use App\Services\ProductService;
 use App\Services\CategoryService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -34,10 +33,9 @@ class ProductController extends Controller
         return Inertia::render('product/Index');
     }
 
-    public function datatable(DatatableRequest $request): JsonResponse
+    public function datatable(DatatableRequest $request)
     {
-        $paginator = $this->productDatatable->getDatatable($request, $this->loggedUser);
-        return response()->json($paginator);
+        return $this->productDatatable->getDatatable($request, $this->loggedUser);
     }
 
     public function create(): InertiaResponse
