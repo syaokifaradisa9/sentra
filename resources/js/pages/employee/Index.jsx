@@ -107,6 +107,65 @@ export default function EmployeeIndex() {
             ? branches.map((branch) => branch.name).join(", ")
             : "-";
 
+    const renderEmployeeCard = (employee) => {
+        const branches = employee.branches ?? [];
+        const initial = (employee.name ?? "?").charAt(0).toUpperCase();
+
+        return (
+            <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-primary/5 dark:border-slate-700/60 dark:bg-slate-900/70">
+                <div className="flex items-center gap-4">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-base font-semibold text-primary dark:bg-teal-400/10 dark:text-teal-200">
+                        {initial}
+                    </span>
+                    <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                            Karyawan
+                        </p>
+                        <p className="text-lg font-semibold text-slate-800 dark:text-white">
+                            {employee.name}
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {employee.position || "Belum ada jabatan"}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                    <div className="flex items-center gap-2">
+                        <Mail className="size-4 text-slate-400 dark:text-slate-500" />
+                        <span>{employee.email}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Phone className="size-4 text-slate-400 dark:text-slate-500" />
+                        <span>{employee.phone || "Belum ada telepon"}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <MapPin className="mt-0.5 size-4 text-slate-400 dark:text-slate-500" />
+                        <span>{branchLabel(branches)}</span>
+                    </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                        href={`/employees/${employee.id}/edit`}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/40 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white dark:border-teal-400/40 dark:text-teal-200 dark:hover:bg-teal-400/10"
+                    >
+                        <Edit className="size-4" />
+                        Edit
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => openDeleteModal(employee)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-600 hover:text-white dark:border-red-400/30 dark:text-red-300 dark:hover:bg-red-500/20"
+                    >
+                        <Trash2 className="size-4" />
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <RootLayout title="Data Karyawan">
             <ConfirmationAlert
@@ -141,6 +200,7 @@ export default function EmployeeIndex() {
             >
                 <DataTable
                     dataTable={dataTable}
+                    cardItem={renderEmployeeCard}
                     additionalHeaderElements={
                         <DropdownButton
                             icon={
