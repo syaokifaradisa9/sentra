@@ -11,7 +11,6 @@ class Promo extends Model
 
     protected $fillable = [
         'product_id',
-        'owner_id',
         'scope_type',
         'scope_id',
         'start_date',
@@ -28,7 +27,6 @@ class Promo extends Model
         'end_date' => 'date',
         'percent_discount' => 'decimal:2',
         'price_discount' => 'decimal:2',
-        'owner_id' => 'integer',
         'usage_limit' => 'integer',
         'used_count' => 'integer',
         'impacted_products' => 'integer',
@@ -40,7 +38,7 @@ class Promo extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class, 'scope_id');
+        return $this->belongsTo(Product::class);
     }
 
     public function scopedBusiness()

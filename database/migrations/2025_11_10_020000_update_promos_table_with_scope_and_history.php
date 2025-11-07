@@ -13,7 +13,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('promos', function (Blueprint $table) {
-            $table->foreignId('owner_id')->nullable()->after('id')->constrained('users')->nullOnDelete();
             $table->string('scope_type')->default('product')->after('product_id');
             $table->unsignedBigInteger('scope_id')->nullable()->after('scope_type');
             $table->unsignedInteger('usage_limit')->nullable()->after('price_discount');
@@ -27,21 +26,6 @@ return new class extends Migration
             'scope_type' => DB::raw("CASE WHEN product_id IS NOT NULL THEN 'product' ELSE 'product' END"),
             'scope_id' => DB::raw('product_id'),
         ]);
-
-        $owners = DB::table('promos')
-            ->leftJoin('product_branches', 'product_branches.product_id', '=', 'promos.product_id')
-            ->leftJoin('branches', 'branches.id', '=', 'product_branches.branch_id')
-            ->select('promos.id', DB::raw('MIN(branches.owner_id) as owner_id'))
-            ->groupBy('promos.id')
-            ->get();
-
-        foreach ($owners as $row) {
-            if ($row->owner_id) {
-                DB::table('promos')
-                    ->where('id', $row->id)
-                    ->update(['owner_id' => $row->owner_id]);
-            }
-        }
 
         Schema::create('promo_price_histories', function (Blueprint $table) {
             $table->id();
@@ -62,7 +46,6 @@ return new class extends Migration
         Schema::dropIfExists('promo_price_histories');
 
         Schema::table('promos', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('owner_id');
             $table->dropIndex(['scope_type', 'scope_id']);
             $table->dropColumn([
                 'scope_type',

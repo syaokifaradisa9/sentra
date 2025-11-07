@@ -41,7 +41,6 @@ class PromoService
             }
 
             $data = $dto->toArray();
-            $data['owner_id'] = $userId;
             $data['impacted_products'] = count($productIds);
 
             $promo = $this->promoRepository->store($data);
@@ -70,12 +69,11 @@ class PromoService
 
             if (empty($productIds)) {
                 throw ValidationException::withMessages([
-                    'scope_id' => 'Tidak ada produk yang cocok dengan cakupan promo.',
+                    'scope_id' => 'Produk tidak valid untuk cakupan ini.',
                 ]);
             }
 
             $data = $dto->toArray();
-            $data['owner_id'] = $userId;
             $data['impacted_products'] = count($productIds);
 
             $updated = $this->promoRepository->update($promoId, $data);
@@ -123,28 +121,11 @@ class PromoService
 
     private function resolveProductIds(PromoDTO $dto, int $userId): array
     {
-        return match ($dto->scopeType) {
-            'product' => $dto->scopeId
-                ? $this->validateProductOwnership($dto->scopeId, $userId)
-                : $this->productRepository
-                    ->getForUser($userId, [])
-                    ->pluck('id')
-                    ->unique()
-                    ->values()
-                    ->all(),
-            'business' => $this->collectProductsByBusiness($dto->scopeId, $userId),
-            'branch' => $this->collectProductsByBranch($dto->scopeId, $userId),
-            default => [],
-        };
-    }
-
-    private function validateProductOwnership(int $productId, int $userId): array
-    {
-        $product = $this->productRepository->getById($productId);
+        $product = $this->productRepository->getById($dto->productId);
 
         if (! $product) {
             throw ValidationException::withMessages([
-                'scope_id' => 'Produk tidak ditemukan.',
+                'product_id' => 'Produk tidak ditemukan.',
             ]);
         }
 
@@ -157,55 +138,61 @@ class PromoService
 
         if (! $hasAccess) {
             throw ValidationException::withMessages([
-                'scope_id' => 'Anda tidak memiliki akses ke produk ini.',
+                'product_id' => 'Anda tidak memiliki akses ke produk ini.',
             ]);
+        }
+
+        if ($dto->scopeType === 'business') {
+            if (! $dto->scopeId) {
+                throw ValidationException::withMessages([
+                    'scope_id' => 'Pilih bisnis untuk promo ini.',
+                ]);
+            }
+
+            $business = $this->businessRepository->getById($dto->scopeId);
+            if (! $business || $business->owner_id !== $userId) {
+                throw ValidationException::withMessages([
+                    'scope_id' => 'Bisnis tidak valid atau tidak dimiliki.',
+                ]);
+            }
+
+            $inBusiness = $product->branches
+                ->pluck('business_id')
+                ->contains((int) $dto->scopeId);
+
+            if (! $inBusiness) {
+                throw ValidationException::withMessages([
+                    'scope_id' => 'Produk tidak tersedia pada bisnis ini.',
+                ]);
+            }
+        }
+
+        if ($dto->scopeType === 'branch') {
+            if (! $dto->scopeId) {
+                throw ValidationException::withMessages([
+                    'scope_id' => 'Pilih cabang untuk promo ini.',
+                ]);
+            }
+
+            $branch = $this->branchRepository->getById($dto->scopeId);
+            if (! $branch || $branch->owner_id !== $userId) {
+                throw ValidationException::withMessages([
+                    'scope_id' => 'Cabang tidak valid atau tidak dimiliki.',
+                ]);
+            }
+
+            $inBranch = $product->branches
+                ->pluck('id')
+                ->contains((int) $dto->scopeId);
+
+            if (! $inBranch) {
+                throw ValidationException::withMessages([
+                    'scope_id' => 'Produk tidak tersedia pada cabang ini.',
+                ]);
+            }
         }
 
         return [$product->id];
-    }
-
-    private function collectProductsByBusiness(?int $businessId, int $userId): array
-    {
-        if (! $businessId) {
-            return [];
-        }
-
-        $business = $this->businessRepository->getById($businessId);
-
-        if (! $business || $business->owner_id !== $userId) {
-            throw ValidationException::withMessages([
-                'scope_id' => 'Bisnis tidak valid atau tidak dimiliki.',
-            ]);
-        }
-
-        return $this->productRepository
-            ->getByBusinessId($businessId)
-            ->pluck('id')
-            ->unique()
-            ->values()
-            ->all();
-    }
-
-    private function collectProductsByBranch(?int $branchId, int $userId): array
-    {
-        if (! $branchId) {
-            return [];
-        }
-
-        $branch = $this->branchRepository->getById($branchId);
-
-        if (! $branch || $branch->owner_id !== $userId) {
-            throw ValidationException::withMessages([
-                'scope_id' => 'Cabang tidak valid atau tidak dimiliki.',
-            ]);
-        }
-
-        return $this->productRepository
-            ->getByBranchId($branchId)
-            ->pluck('id')
-            ->unique()
-            ->values()
-            ->all();
     }
 
     private function recordPriceHistories(Promo $promo, array $productIds, PromoDTO $dto): void

@@ -16,15 +16,24 @@ class PromoRequest extends FormRequest
     {
         $scopeType = $this->input('scope_type');
 
+        $scopeRules = ['nullable'];
+
+        if ($scopeType === 'product') {
+            // no additional required scope target
+        } elseif ($scopeType === 'business') {
+            $scopeRules[] = 'required';
+            $scopeRules[] = 'integer';
+            $scopeRules[] = 'exists:businesses,id';
+        } elseif ($scopeType === 'branch') {
+            $scopeRules[] = 'required';
+            $scopeRules[] = 'integer';
+            $scopeRules[] = 'exists:branches,id';
+        }
+
         return [
+            'product_id' => 'required|exists:products,id',
             'scope_type' => ['required', Rule::in(['product', 'business', 'branch'])],
-            'scope_id' => [
-                'nullable',
-                'integer',
-                Rule::requiredIf(in_array($scopeType, ['business', 'branch'], true)),
-                Rule::when($scopeType === 'business', ['exists:businesses,id']),
-                Rule::when($scopeType === 'branch', ['exists:branches,id']),
-            ],
+            'scope_id' => $scopeRules,
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'percent_discount' => 'nullable|numeric|min:0|max:100|required_without:price_discount',
@@ -36,10 +45,12 @@ class PromoRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'product_id.required' => 'Produk wajib dipilih.',
+            'product_id.exists' => 'Produk tidak valid.',
             'scope_type.required' => 'Jenis cakupan promo wajib dipilih.',
             'scope_type.in' => 'Jenis cakupan promo tidak valid.',
-            'scope_id.required' => 'Pilih data untuk cakupan promo ini.',
-            'scope_id.exists' => 'Data cakupan promo tidak valid.',
+            'scope_id.required' => 'Pilih target sesuai cakupan promo.',
+            'scope_id.exists' => 'Data target promo tidak valid.',
             'start_date.required' => 'Tanggal mulai wajib diisi.',
             'start_date.date' => 'Tanggal mulai tidak valid.',
             'end_date.required' => 'Tanggal selesai wajib diisi.',

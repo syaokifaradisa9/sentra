@@ -71,6 +71,7 @@
                 <th>Produk</th>
                 <th>Kategori</th>
                 <th>Periode</th>
+                <th>Cakupan</th>
                 <th>Diskon</th>
                 <th>Harga Awal</th>
                 <th>Harga Promo</th>
@@ -79,23 +80,36 @@
         <tbody>
             @forelse($records as $index => $promo)
                 @php
-                    $basePrice = (float) ($promo->product->price ?? 0);
+                    $basePrice = $promo->product->price ?? null;
                     $percent = $promo->percent_discount;
                     $nominal = $promo->price_discount;
                     $promoPrice = $basePrice;
-                    if ($percent !== null) {
-                        $promoPrice -= $promoPrice * ((float) $percent / 100);
+                    if ($promoPrice !== null) {
+                        $promoPrice = (float) $promoPrice;
+                        if ($percent !== null) {
+                            $promoPrice -= $promoPrice * ((float) $percent / 100);
+                        }
+                        if ($nominal !== null) {
+                            $promoPrice -= (float) $nominal;
+                        }
+                        $promoPrice = max($promoPrice, 0);
                     }
-                    if ($nominal !== null) {
-                        $promoPrice -= (float) $nominal;
-                    }
-                    $promoPrice = max($promoPrice, 0);
                 @endphp
                 <tr>
                     <td style="text-align: center;">{{ $index + 1 }}</td>
-                    <td>{{ $promo->product->name ?? '-' }}</td>
+                    <td>{{ $promo->scope_label ?? $promo->product->name ?? '-' }}</td>
                     <td>{{ $promo->product->category->name ?? '-' }}</td>
                     <td>{{ optional($promo->start_date)->format('d M Y') }} s/d {{ optional($promo->end_date)->format('d M Y') }}</td>
+                    <td>
+                        @php
+                            $scopeTypeLabel = match($promo->scope_type) {
+                                'business' => 'Per Bisnis',
+                                'branch' => 'Per Cabang',
+                                default => 'Semua Produk',
+                            };
+                        @endphp
+                        {{ $promo->scope_label ?? '-' }} ({{ $scopeTypeLabel }})
+                    </td>
                     <td>
                         @php $parts = []; @endphp
                         @if(!is_null($promo->percent_discount))
@@ -106,12 +120,24 @@
                         @endif
                         {{ implode(' + ', $parts) ?: '-' }}
                     </td>
-                    <td style="text-align: right;">Rp {{ number_format($basePrice, 0, ',', '.') }}</td>
-                    <td style="text-align: right;">Rp {{ number_format($promoPrice, 0, ',', '.') }}</td>
+                    <td style="text-align: right;">
+                        @if($basePrice === null)
+                            -
+                        @else
+                            Rp {{ number_format((float) $basePrice, 0, ',', '.') }}
+                        @endif
+                    </td>
+                    <td style="text-align: right;">
+                        @if($promoPrice === null)
+                            -
+                        @else
+                            Rp {{ number_format($promoPrice, 0, ',', '.') }}
+                        @endif
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align: center;">Tidak ada data promo</td>
+                    <td colspan="8" style="text-align: center;">Tidak ada data promo</td>
                 </tr>
             @endforelse
         </tbody>

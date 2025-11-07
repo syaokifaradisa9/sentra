@@ -15,7 +15,9 @@ class PromoDatatableService
     {
         $query = Promo::query()
             ->with(['product.category', 'scopedBusiness', 'scopedBranch'])
-            ->where('owner_id', $loggedUser->id);
+            ->where(function ($builder) use ($loggedUser) {
+                $this->applyOwnerScope($builder, $loggedUser->id);
+            });
 
         $search = $request->input('search');
         if ($search) {
@@ -23,6 +25,12 @@ class PromoDatatableService
                 $builder
                     ->whereHas('product', function ($productQuery) use ($search) {
                         $productQuery->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('scopedBusiness', function ($businessQuery) use ($search) {
+                        $businessQuery->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('scopedBranch', function ($branchQuery) use ($search) {
+                        $branchQuery->where('name', 'like', "%{$search}%");
                     })
                     ->orWhere('percent_discount', 'like', "%{$search}%")
                     ->orWhere('price_discount', 'like', "%{$search}%");
@@ -93,6 +101,7 @@ class PromoDatatableService
             'No',
             'Produk',
             'Kategori',
+            'Cakupan',
             'Periode',
             'Diskon',
             'Harga Awal',
@@ -112,7 +121,7 @@ class PromoDatatableService
 
         foreach ($records as $index => $record) {
             $row = $index + 2;
-            $basePrice = (float) $record->product?->price;
+            $basePrice = $record->product?->price;
 
             $discountLabel = [];
             if (! is_null($record->percent_discount)) {
@@ -123,24 +132,29 @@ class PromoDatatableService
             }
 
             $promoPrice = $basePrice;
-            if (! is_null($record->percent_discount)) {
-                $promoPrice -= $promoPrice * ((float) $record->percent_discount / 100);
-            }
-            if (! is_null($record->price_discount)) {
-                $promoPrice -= (float) $record->price_discount;
+            if ($promoPrice !== null) {
+                $promoPrice = (float) $promoPrice;
+                if (! is_null($record->percent_discount)) {
+                    $promoPrice -= $promoPrice * ((float) $record->percent_discount / 100);
+                }
+                if (! is_null($record->price_discount)) {
+                    $promoPrice -= (float) $record->price_discount;
+                }
+                $promoPrice = max($promoPrice, 0);
             }
 
             $worksheet->setCellValue("A{$row}", $index + 1);
             $worksheet->setCellValue("B{$row}", $record->product?->name ?? '-');
             $worksheet->setCellValue("C{$row}", $record->product?->category?->name ?? '-');
-            $worksheet->setCellValue("D{$row}", sprintf(
+            $worksheet->setCellValue("D{$row}", $record->scope_label ?? '-');
+            $worksheet->setCellValue("E{$row}", sprintf(
                 '%s s/d %s',
                 optional($record->start_date)?->format('d M Y'),
                 optional($record->end_date)?->format('d M Y')
             ));
-            $worksheet->setCellValue("E{$row}", implode(' + ', $discountLabel) ?: '-');
-            $worksheet->setCellValue("F{$row}", 'Rp ' . number_format($basePrice, 0, ',', '.'));
-            $worksheet->setCellValue("G{$row}", 'Rp ' . number_format(max($promoPrice, 0), 0, ',', '.'));
+            $worksheet->setCellValue("F{$row}", implode(' + ', $discountLabel) ?: '-');
+            $worksheet->setCellValue("G{$row}", $basePrice === null ? '-' : 'Rp ' . number_format((float) $basePrice, 0, ',', '.'));
+            $worksheet->setCellValue("H{$row}", $promoPrice === null ? '-' : 'Rp ' . number_format($promoPrice, 0, ',', '.'));
         }
 
         $fileName = 'Laporan Promo ' . now()->format('d F Y') . '.xlsx';
@@ -149,5 +163,34 @@ class PromoDatatableService
         (new Xlsx($spreadsheet))->save($path);
 
         return Response::download($path)->deleteFileAfterSend(true);
+    }
+
+    private function applyOwnerScope($query, int $userId): void
+    {
+        $query->where(function ($builder) use ($userId) {
+            $builder
+                ->orWhere(function ($scope) use ($userId) {
+                    $scope->where(function ($productScope) {
+                        $productScope
+                            ->whereNull('scope_type')
+                            ->orWhere('scope_type', 'product');
+                    })
+                        ->whereHas('product.branches', function ($branchQuery) use ($userId) {
+                            $branchQuery->where('branches.owner_id', $userId);
+                        });
+                })
+                ->orWhere(function ($scope) use ($userId) {
+                    $scope->where('scope_type', 'business')
+                        ->whereHas('scopedBusiness', function ($businessQuery) use ($userId) {
+                            $businessQuery->where('owner_id', $userId);
+                        });
+                })
+                ->orWhere(function ($scope) use ($userId) {
+                    $scope->where('scope_type', 'branch')
+                        ->whereHas('scopedBranch', function ($branchQuery) use ($userId) {
+                            $branchQuery->where('owner_id', $userId);
+                        });
+                });
+        });
     }
 }

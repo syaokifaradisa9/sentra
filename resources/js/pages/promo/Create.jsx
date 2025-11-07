@@ -7,11 +7,14 @@ import ContentCard from "../../components/layouts/ContentCard";
 import RootLayout from "../../components/layouts/RootLayout";
 
 export default function PromoCreate({
+    products = { all: [], by_business: {}, by_branch: {} },
     businesses = [],
     branches = [],
 }) {
     const { data, setData, post, processing, errors } = useForm({
-        scope_type: "product",
+        product_id: "",
+        product_id: "",
+        scope_type: "",
         scope_id: "",
         start_date: "",
         end_date: "",
@@ -21,6 +24,8 @@ export default function PromoCreate({
     });
 
     const scopeType = data.scope_type;
+    const businessProductOptions = products.by_business ?? {};
+    const branchProductOptions = products.by_branch ?? {};
 
     const handleScopeTypeChange = (event) => {
         const { value } = event.target;
@@ -28,7 +33,29 @@ export default function PromoCreate({
             ...prev,
             scope_type: value,
             scope_id: "",
+            product_id: "",
         }));
+    };
+
+    const handleScopeChange = (event) => {
+        const { value } = event.target;
+        setData((prev) => ({
+            ...prev,
+            scope_id: value,
+            product_id: "",
+        }));
+    };
+
+    const scopedProducts = () => {
+        if (scopeType === "business" && data.scope_id) {
+            return businessProductOptions[data.scope_id] ?? [];
+        }
+
+        if (scopeType === "branch" && data.scope_id) {
+            return branchProductOptions[data.scope_id] ?? [];
+        }
+
+        return products.all ?? [];
     };
 
     const handleSubmit = (event) => {
@@ -40,59 +67,76 @@ export default function PromoCreate({
         <RootLayout title="Tambah Promo">
             <ContentCard title="Tambah Promo" backPath="/promos">
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <FormSelect
-                        name="scope_type"
-                        label="Jenis Promo"
-                        value={data.scope_type}
-                        onChange={handleScopeTypeChange}
-                        options={[
-                            { value: "product", label: "Per Produk (Semua Produk)" },
-                            { value: "business", label: "Per Bisnis" },
-                            { value: "branch", label: "Per Cabang" },
-                        ]}
-                        placeholder="Pilih cakupan promo"
-                        error={errors.scope_type}
-                        required
-                    />
+                    <div
+                        className={`grid gap-4 ${
+                            scopeType === "product"
+                                ? "md:grid-cols-2"
+                                : "md:grid-cols-3"
+                        }`}
+                    >
+                        <FormSelect
+                            name="scope_type"
+                            label="Jenis Promo"
+                            value={data.scope_type}
+                            onChange={handleScopeTypeChange}
+                            options={[
+                                { value: "", label: "Pilih jenis promo" },
+                                { value: "product", label: "Per Produk (Semua Cabang)" },
+                                { value: "business", label: "Per Bisnis" },
+                                { value: "branch", label: "Per Cabang" },
+                            ]}
+                            placeholder="Pilih cakupan promo"
+                            error={errors.scope_type}
+                            required
+                        />
+
+                        {scopeType !== "product" && (
+                            <FormSelect
+                                name="scope_id"
+                                label={
+                                    scopeType === "business"
+                                        ? "Pilih Bisnis"
+                                        : "Pilih Cabang"
+                                }
+                                value={data.scope_id}
+                                onChange={handleScopeChange}
+                                options={
+                                    scopeType === "business"
+                                        ? businesses.map((business) => ({
+                                              value: business.id,
+                                              label: business.name,
+                                          }))
+                                        : branches.map((branch) => ({
+                                              value: branch.id,
+                                              label: branch.name,
+                                          }))
+                                }
+                                placeholder={
+                                    scopeType === "business"
+                                        ? "Pilih bisnis"
+                                        : "Pilih cabang"
+                                }
+                                error={errors.scope_id}
+                                required
+                            />
+                        )}
+
+                        <FormSelect
+                            name="product_id"
+                            label="Produk"
+                            value={data.product_id}
+                            onChange={(event) =>
+                                setData("product_id", event.target.value)
+                            }
+                            options={scopedProducts()}
+                            placeholder="Pilih produk"
+                            error={errors.product_id}
+                            required
+                        />
+                    </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Pilih cakupan promo: semua produk, bisnis tertentu, atau cabang tertentu.
+                        Pilih cakupan promo: semua cabang, bisnis tertentu, atau cabang tertentu untuk produk yang dipilih.
                     </p>
-
-                    {scopeType === "business" && (
-                        <FormSelect
-                            name="scope_id"
-                            label="Pilih Bisnis"
-                            value={data.scope_id}
-                            onChange={(event) =>
-                                setData("scope_id", event.target.value)
-                            }
-                            options={businesses.map((business) => ({
-                                value: business.id,
-                                label: business.name,
-                            }))}
-                            placeholder="Pilih bisnis"
-                            error={errors.scope_id}
-                            required
-                        />
-                    )}
-
-                    {scopeType === "branch" && (
-                        <FormSelect
-                            name="scope_id"
-                            label="Pilih Cabang"
-                            value={data.scope_id}
-                            onChange={(event) =>
-                                setData("scope_id", event.target.value)
-                            }
-                            options={branches.map((branch) => ({
-                                value: branch.id,
-                                label: branch.name,
-                            }))}
-                            placeholder="Pilih cabang"
-                            error={errors.scope_id}
-                            required
-                        />
-                    )}
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <FormInput

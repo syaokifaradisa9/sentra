@@ -42,11 +42,40 @@ class EloquentPromoPriceHistoryRepository implements PromoPriceHistoryRepository
         return $this->model->newQuery()
             ->with(['promo', 'product'])
             ->whereHas('promo', function ($query) use ($userId) {
-                $query->where('owner_id', $userId);
+                $this->applyPromoOwnerScope($query, $userId);
             })
             ->latest('recorded_at')
             ->latest()
             ->limit($limit)
             ->get();
+    }
+
+    private function applyPromoOwnerScope($query, int $userId): void
+    {
+        $query->where(function ($builder) use ($userId) {
+            $builder
+                ->orWhere(function ($scope) use ($userId) {
+                    $scope->where(function ($productScope) {
+                        $productScope
+                            ->whereNull('scope_type')
+                            ->orWhere('scope_type', 'product');
+                    })
+                        ->whereHas('product.branches', function ($branchQuery) use ($userId) {
+                            $branchQuery->where('branches.owner_id', $userId);
+                        });
+                })
+                ->orWhere(function ($scope) use ($userId) {
+                    $scope->where('scope_type', 'business')
+                        ->whereHas('scopedBusiness', function ($businessQuery) use ($userId) {
+                            $businessQuery->where('owner_id', $userId);
+                        });
+                })
+                ->orWhere(function ($scope) use ($userId) {
+                    $scope->where('scope_type', 'branch')
+                        ->whereHas('scopedBranch', function ($branchQuery) use ($userId) {
+                            $branchQuery->where('owner_id', $userId);
+                        });
+                });
+        });
     }
 }

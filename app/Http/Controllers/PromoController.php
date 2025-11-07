@@ -8,6 +8,7 @@ use App\Http\Requests\Common\DatatableRequest;
 use App\Http\Requests\PromoRequest;
 use App\Services\BranchService;
 use App\Services\BusinessService;
+use App\Services\ProductService;
 use App\Services\PromoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,7 @@ class PromoController extends Controller
         private PromoDatatableService $promoDatatable,
         private BusinessService $businessService,
         private BranchService $branchService,
+        private ProductService $productService,
     ) {
         $this->loggedUser = Auth::user();
     }
@@ -56,6 +58,7 @@ class PromoController extends Controller
     public function create(): InertiaResponse
     {
         return Inertia::render('promo/Create', [
+            'products' => $this->productOptionPayload(),
             'businesses' => $this->businessOptions(),
             'branches' => $this->branchOptions(),
         ]);
@@ -86,6 +89,7 @@ class PromoController extends Controller
 
         return Inertia::render('promo/Edit', [
             'promo' => $this->formatPromo($promoModel),
+            'products' => $this->productOptionPayload(),
             'businesses' => $this->businessOptions(),
             'branches' => $this->branchOptions(),
         ]);
@@ -162,18 +166,63 @@ class PromoController extends Controller
         return $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id);
     }
 
+    private function productOptionPayload(): array
+    {
+        $products = $this->productService
+            ->getByOwnerId($this->loggedUser->id)
+            ->map(function ($product) {
+                $product->loadMissing(['branches']);
+                return $product;
+            });
+
+        $all = [];
+        $byBusiness = [];
+        $byBranch = [];
+
+        foreach ($products as $product) {
+            $option = [
+                'value' => (string) $product->id,
+                'label' => $product->name,
+            ];
+
+            $all[] = $option;
+
+            $businessIds = $product->branches
+                ->pluck('business_id')
+                ->filter()
+                ->unique()
+                ->all();
+
+            foreach ($businessIds as $businessId) {
+                $byBusiness[$businessId][] = $option;
+            }
+
+            foreach ($product->branches as $branch) {
+                $byBranch[$branch->id][] = $option;
+            }
+        }
+
+        return [
+            'all' => $all,
+            'by_business' => array_map('array_values', $byBusiness),
+            'by_branch' => array_map('array_values', $byBranch),
+        ];
+    }
+
     private function formatPromo($promo): array
     {
+        $product = $promo->product;
+
         return [
             'id' => $promo->id,
-            'product' => $promo->product
+            'product' => $product
                 ? [
-                    'id' => $promo->product->id,
-                    'name' => $promo->product->name,
-                    'price' => $promo->product->price,
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
                     'category' => [
-                        'id' => $promo->product->category?->id,
-                        'name' => $promo->product->category?->name,
+                        'id' => $product->category?->id,
+                        'name' => $product->category?->name,
                     ],
                 ]
                 : null,

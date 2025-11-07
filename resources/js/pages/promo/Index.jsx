@@ -65,6 +65,17 @@ const usageLabel = (promo) => {
     return `${promo?.used_count ?? 0} / ${promo.usage_limit}`;
 };
 
+const renderCurrency = (value) => {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    const numericValue = Number(value);
+    if (Number.isNaN(numericValue)) {
+        return '-';
+    }
+    return currencyFormatter.format(numericValue);
+};
+
 const getBasePrice = (promo) => {
     if (hasValue(promo.product?.price)) {
         return Number(promo.product.price);
@@ -72,11 +83,16 @@ const getBasePrice = (promo) => {
     if (hasValue(promo.product_price)) {
         return Number(promo.product_price);
     }
-    return 0;
+    return null;
 };
 
 const getPromoPrice = (promo) => {
-    let price = getBasePrice(promo);
+    const basePrice = getBasePrice(promo);
+    if (basePrice === null) {
+        return null;
+    }
+
+    let price = basePrice;
 
     if (hasValue(promo.percent_discount)) {
         price -= price * (Number(promo.percent_discount) / 100);
@@ -223,14 +239,17 @@ export default function PromoIndex({
             <div className="flex items-center justify-between gap-3">
                 <div>
                     <p className="text-xs font-semibold uppercase tracking-widest text-primary/70 dark:text-teal-200/70">
-                        {scopeTypeLabel(promo.scope_type)}
+                        {promo.product?.name ?? '-'}
                     </p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {promo.scope_label ?? '-'}
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {promo.product?.category?.name ?? '-'}
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-300">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Cakupan: {promo.scope_label ?? '-'} ({scopeTypeLabel(promo.scope_type)})
+                    </p>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {discountLabel(promo)}
-                    </p>
+                    </h3>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                     #{promo.id}
@@ -239,7 +258,7 @@ export default function PromoIndex({
             <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                     <CalendarDays className="size-3.5" />
-                    {formatDate(promo.start_date)} -{' '}
+                    {formatDate(promo.start_date)} s/d{' '}
                     {formatDate(promo.end_date)}
                 </span>
                 {hasValue(promo.percent_discount) && (
@@ -264,7 +283,7 @@ export default function PromoIndex({
                         Harga Awal
                     </span>
                     <span className="font-semibold text-slate-800 dark:text-slate-100">
-                        {currencyFormatter.format(getBasePrice(promo))}
+                        {renderCurrency(getBasePrice(promo))}
                     </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -272,7 +291,15 @@ export default function PromoIndex({
                         Harga Promo
                     </span>
                     <span className="font-semibold text-primary dark:text-teal-200">
-                        {currencyFormatter.format(getPromoPrice(promo))}
+                        {renderCurrency(getPromoPrice(promo))}
+                    </span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">
+                        Kuota
+                    </span>
+                    <span className="font-semibold text-slate-700 dark:text-slate-200">
+                        {usageLabel(promo)}
                     </span>
                 </div>
             </div>
@@ -302,7 +329,7 @@ export default function PromoIndex({
                 setOpenModalStatus={setIsConfirmOpen}
                 title="Konfirmasi Hapus"
                 message={`Hapus promo ${
-                    selectedPromo?.product?.name ?? ''
+                    selectedPromo?.scope_label ?? selectedPromo?.product?.name ?? ''
                 }? Tindakan ini tidak dapat dibatalkan.`}
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
@@ -379,6 +406,20 @@ export default function PromoIndex({
                     columns={[
                         {
                             name: null,
+                            header: 'Produk',
+                            render: (item) => (
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                        {item.product?.name ?? '-'}
+                                    </span>
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">
+                                        {item.product?.category?.name ?? '-'}
+                                    </span>
+                                </div>
+                            ),
+                        },
+                        {
+                            name: null,
                             header: 'Cakupan',
                             render: (item) => (
                                 <div className="flex flex-col">
@@ -423,9 +464,7 @@ export default function PromoIndex({
                             header: 'Harga Awal',
                             render: (item) => (
                                 <span className="font-semibold text-slate-700 dark:text-slate-200">
-                                    {currencyFormatter.format(
-                                        getBasePrice(item),
-                                    )}
+                                    {renderCurrency(getBasePrice(item))}
                                 </span>
                             ),
                         },
@@ -434,9 +473,7 @@ export default function PromoIndex({
                             header: 'Harga Promo',
                             render: (item) => (
                                 <span className="font-semibold text-primary dark:text-teal-200">
-                                    {currencyFormatter.format(
-                                        getPromoPrice(item),
-                                    )}
+                                    {renderCurrency(getPromoPrice(item))}
                                 </span>
                             ),
                         },
@@ -497,49 +534,41 @@ export default function PromoIndex({
                         Belum ada riwayat harga yang tercatat.
                     </p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                            <thead>
-                                <tr>
-                                    <th className="whitespace-nowrap px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
-                                        Promo
-                                    </th>
-                                    <th className="px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
-                                        Produk
-                                    </th>
-                                    <th className="px-4 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
-                                        Harga Awal
-                                    </th>
-                                    <th className="px-4 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
-                                        Harga Promo
-                                    </th>
-                                    <th className="px-4 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
-                                        Waktu
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-                                {priceHistories.map((history) => (
-                                    <tr key={history.id}>
-                                        <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {priceHistories.map((history) => (
+                            <div
+                                key={history.id}
+                                className="rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-primary/5 dark:border-slate-700/60 dark:bg-slate-900/70"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase tracking-widest text-primary/70 dark:text-teal-200/70">
                                             {history.promo?.label ?? '-'}
-                                        </td>
-                                        <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
+                                        </p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {history.product?.name ?? '-'}
-                                        </td>
-                                        <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-200">
-                                            {currencyFormatter.format(history.base_price ?? 0)}
-                                        </td>
-                                        <td className="px-4 py-2 text-right text-primary dark:text-teal-200">
-                                            {currencyFormatter.format(history.promo_price ?? 0)}
-                                        </td>
-                                        <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">
-                                            {history.recorded_at ?? '-'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </p>
+                                    </div>
+                                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                                        {history.recorded_at ?? '-'}
+                                    </span>
+                                </div>
+                                <div className="mt-4 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                                    <div className="flex items-center justify-between">
+                                        <span>Harga Awal</span>
+                                        <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                            {renderCurrency(history.base_price ?? null)}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <span>Harga Promo</span>
+                                        <span className="font-semibold text-primary dark:text-teal-200">
+                                            {renderCurrency(history.promo_price ?? null)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </ContentCard>

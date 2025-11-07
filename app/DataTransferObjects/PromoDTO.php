@@ -7,6 +7,7 @@ use App\Http\Requests\PromoRequest;
 class PromoDTO
 {
     public function __construct(
+        public int $productId,
         public string $scopeType,
         public ?int $scopeId,
         public string $startDate,
@@ -21,6 +22,7 @@ class PromoDTO
         $validated = $request->validated();
 
         return new self(
+            productId: (int) $validated['product_id'],
             scopeType: $validated['scope_type'],
             scopeId: $validated['scope_id'] ?? null,
             startDate: $validated['start_date'],
@@ -42,7 +44,7 @@ class PromoDTO
             : null;
 
         return [
-            'product_id' => null,
+            'product_id' => $this->productId,
             'scope_type' => $this->scopeType,
             'scope_id' => $resolvedScopeId,
             'start_date' => $this->startDate,
