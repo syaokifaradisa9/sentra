@@ -21,6 +21,8 @@ use App\Repositories\UserBranch\UserBranchRepository;
 use App\Repositories\UserBranch\EloquentUserBranchRepository;
 use App\Repositories\Promo\PromoRepository;
 use App\Repositories\Promo\EloquentPromoRepository;
+use App\Repositories\PromoPriceHistory\PromoPriceHistoryRepository;
+use App\Repositories\PromoPriceHistory\EloquentPromoPriceHistoryRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -55,6 +57,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Promo Repository
         $this->app->singleton(PromoRepository::class, EloquentPromoRepository::class);
+
+        // Promo Price History Repository
+        $this->app->singleton(PromoPriceHistoryRepository::class, EloquentPromoPriceHistoryRepository::class);
     }
 
     /**

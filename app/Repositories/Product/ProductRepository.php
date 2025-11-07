@@ -18,4 +18,5 @@ interface ProductRepository
     public function getByCategoryId(int $categoryId): Collection;
     public function paginateForUser(int $userId, array $filters): LengthAwarePaginator;
     public function getForUser(int $userId, array $filters): Collection;
+    public function getByIds(array $ids): Collection;
 }

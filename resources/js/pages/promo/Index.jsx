@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import { CalendarDays, Percent, Plus, Printer, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import ConfirmationAlert from '../../components/alerts/ConfirmationAlert';
 import Button from '../../components/buttons/Button';
 import DropdownButton from '../../components/buttons/DropdownButton';
@@ -44,6 +44,25 @@ const discountLabel = (promo) => {
     }
 
     return parts.length ? parts.join(' + ') : '-';
+};
+
+const scopeTypeLabel = (scopeType) => {
+    switch (scopeType) {
+        case 'business':
+            return 'Per Bisnis';
+        case 'branch':
+            return 'Per Cabang';
+        default:
+            return 'Semua Produk';
+    }
+};
+
+const usageLabel = (promo) => {
+    if (!promo?.usage_limit) {
+        return `${promo?.used_count ?? 0} / ∞`;
+    }
+
+    return `${promo?.used_count ?? 0} / ${promo.usage_limit}`;
 };
 
 const getBasePrice = (promo) => {
@@ -95,7 +114,10 @@ const initialDatatableState = {
     links: [],
 };
 
-export default function PromoIndex() {
+export default function PromoIndex({
+    analytics = {},
+    priceHistories = [],
+}) {
     const [dataTable, setDataTable] = useState(initialDatatableState);
     const [isLoading, setIsLoading] = useState(false);
     const [params, setParams] = useState({
@@ -108,6 +130,16 @@ export default function PromoIndex() {
     });
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [selectedPromo, setSelectedPromo] = useState(null);
+
+    const summaryCards = useMemo(
+        () => [
+            { title: 'Total Promo', value: analytics.total_promos ?? 0 },
+            { title: 'Promo Aktif', value: analytics.active_promos ?? 0 },
+            { title: 'Produk Terpengaruh', value: analytics.total_products ?? 0 },
+            { title: 'Total Penggunaan', value: analytics.total_usage ?? 0 },
+        ],
+        [analytics],
+    );
 
     const loadDatatable = async () => {
         setIsLoading(true);
@@ -190,15 +222,15 @@ export default function PromoIndex() {
         <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-primary/5 dark:border-slate-700/60 dark:bg-slate-900/70">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <p className="text-xs font-semibold tracking-widest text-primary/70 uppercase dark:text-teal-200/70">
-                        {promo.product?.name ?? 'Produk'}
+                    <p className="text-xs font-semibold uppercase tracking-widest text-primary/70 dark:text-teal-200/70">
+                        {scopeTypeLabel(promo.scope_type)}
                     </p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {promo.product?.category?.name ?? '-'}
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                        {promo.scope_label ?? '-'}
                     </p>
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <p className="text-sm text-slate-500 dark:text-slate-300">
                         {discountLabel(promo)}
-                    </h3>
+                    </p>
                 </div>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-200">
                     #{promo.id}
@@ -289,6 +321,22 @@ export default function PromoIndex() {
                 }}
             />
 
+            <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {summaryCards.map((card) => (
+                    <div
+                        key={card.title}
+                        className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
+                    >
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {card.title}
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                            {card.value}
+                        </p>
+                    </div>
+                ))}
+            </div>
+
             <ContentCard
                 title="Daftar Promo"
                 additionalButton={
@@ -331,21 +379,21 @@ export default function PromoIndex() {
                     columns={[
                         {
                             name: null,
-                            header: 'Produk',
+                            header: 'Cakupan',
                             render: (item) => (
                                 <div className="flex flex-col">
                                     <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {item.product?.name ?? '-'}
+                                        {item.scope_label ?? item.product?.name ?? '-'}
                                     </span>
                                     <span className="text-sm text-slate-500 dark:text-slate-400">
-                                        {item.product?.category?.name ?? '-'}
+                                        {scopeTypeLabel(item.scope_type)}
                                     </span>
                                 </div>
                             ),
                             footer: (
                                 <FormSearch
                                     name="product"
-                                    placeholder="Filter Produk"
+                                    placeholder="Filter Produk/Bisnis/Cabang"
                                     onChange={onParamsChange}
                                 />
                             ),
@@ -394,6 +442,15 @@ export default function PromoIndex() {
                         },
                         {
                             name: null,
+                            header: 'Kuota',
+                            render: (item) => (
+                                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                    {usageLabel(item)}
+                                </span>
+                            ),
+                        },
+                        {
+                            name: null,
                             header: 'Status',
                             render: (item) => (
                                 <span
@@ -432,6 +489,59 @@ export default function PromoIndex() {
                         },
                     ]}
                 />
+            </ContentCard>
+
+            <ContentCard title="Riwayat Harga Promo" className="mt-6">
+                {priceHistories.length === 0 ? (
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Belum ada riwayat harga yang tercatat.
+                    </p>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
+                            <thead>
+                                <tr>
+                                    <th className="whitespace-nowrap px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                                        Promo
+                                    </th>
+                                    <th className="px-4 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">
+                                        Produk
+                                    </th>
+                                    <th className="px-4 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
+                                        Harga Awal
+                                    </th>
+                                    <th className="px-4 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
+                                        Harga Promo
+                                    </th>
+                                    <th className="px-4 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">
+                                        Waktu
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                                {priceHistories.map((history) => (
+                                    <tr key={history.id}>
+                                        <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
+                                            {history.promo?.label ?? '-'}
+                                        </td>
+                                        <td className="px-4 py-2 text-slate-700 dark:text-slate-200">
+                                            {history.product?.name ?? '-'}
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-200">
+                                            {currencyFormatter.format(history.base_price ?? 0)}
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-primary dark:text-teal-200">
+                                            {currencyFormatter.format(history.promo_price ?? 0)}
+                                        </td>
+                                        <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">
+                                            {history.recorded_at ?? '-'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </ContentCard>
         </RootLayout>
     );

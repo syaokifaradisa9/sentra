@@ -48,10 +48,8 @@ class EloquentPromoRepository implements PromoRepository
     {
         return $this->model
             ->newQuery()
-            ->with(['product.category'])
-            ->whereHas('product.branches', function ($query) use ($userId) {
-                $query->where('branches.owner_id', $userId);
-            })
+            ->with(['product.category', 'scopedBusiness', 'scopedBranch'])
+            ->where('owner_id', $userId)
             ->orderByDesc('start_date')
             ->orderByDesc('created_at')
             ->get();
@@ -61,11 +59,9 @@ class EloquentPromoRepository implements PromoRepository
     {
         return $this->model
             ->newQuery()
-            ->with(['product.branches', 'product.category'])
+            ->with(['product.branches', 'product.category', 'scopedBusiness', 'scopedBranch'])
             ->where('id', $promoId)
-            ->whereHas('product.branches', function ($query) use ($userId) {
-                $query->where('branches.owner_id', $userId);
-            })
+            ->where('owner_id', $userId)
             ->first();
     }
 }

@@ -14,10 +14,8 @@ class PromoDatatableService
     private function baseQuery(DatatableRequest $request, $loggedUser)
     {
         $query = Promo::query()
-            ->with(['product.category'])
-            ->whereHas('product.branches', function ($builder) use ($loggedUser) {
-                $builder->where('branches.owner_id', $loggedUser->id);
-            });
+            ->with(['product.category', 'scopedBusiness', 'scopedBranch'])
+            ->where('owner_id', $loggedUser->id);
 
         $search = $request->input('search');
         if ($search) {
@@ -32,8 +30,17 @@ class PromoDatatableService
         }
 
         if ($request->filled('product')) {
-            $query->whereHas('product', function ($productQuery) use ($request) {
-                $productQuery->where('name', 'like', "%{$request->product}%");
+            $query->where(function ($builder) use ($request) {
+                $builder
+                    ->whereHas('product', function ($productQuery) use ($request) {
+                        $productQuery->where('name', 'like', "%{$request->product}%");
+                    })
+                    ->orWhereHas('scopedBusiness', function ($businessQuery) use ($request) {
+                        $businessQuery->where('name', 'like', "%{$request->product}%");
+                    })
+                    ->orWhereHas('scopedBranch', function ($branchQuery) use ($request) {
+                        $branchQuery->where('name', 'like', "%{$request->product}%");
+                    });
             });
         }
 

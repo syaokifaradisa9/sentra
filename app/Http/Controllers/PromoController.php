@@ -6,7 +6,8 @@ use App\DataTransferObjects\PromoDTO;
 use App\Datatables\PromoDatatableService;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Http\Requests\PromoRequest;
-use App\Services\ProductService;
+use App\Services\BranchService;
+use App\Services\BusinessService;
 use App\Services\PromoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -21,21 +22,42 @@ class PromoController extends Controller
 
     public function __construct(
         private PromoService $promoService,
-        private ProductService $productService,
         private PromoDatatableService $promoDatatable,
+        private BusinessService $businessService,
+        private BranchService $branchService,
     ) {
         $this->loggedUser = Auth::user();
     }
 
     public function index(): InertiaResponse
     {
-        return Inertia::render('promo/Index');
+        return Inertia::render('promo/Index', [
+            'analytics' => $this->promoService->getAnalyticsSummary($this->loggedUser->id),
+            'priceHistories' => $this->promoService
+                ->getRecentPriceHistories($this->loggedUser->id)
+                ->map(fn ($history) => [
+                    'id' => $history->id,
+                    'promo' => [
+                        'id' => $history->promo_id,
+                        'label' => $history->promo->scope_label ?? 'Promo',
+                    ],
+                    'product' => [
+                        'id' => $history->product_id,
+                        'name' => $history->product->name ?? '-',
+                    ],
+                    'base_price' => $history->base_price,
+                    'promo_price' => $history->promo_price,
+                    'recorded_at' => optional($history->recorded_at)->toDateTimeString(),
+                ])
+                ->toArray(),
+        ]);
     }
 
     public function create(): InertiaResponse
     {
         return Inertia::render('promo/Create', [
-            'products' => $this->productOptions(),
+            'businesses' => $this->businessOptions(),
+            'branches' => $this->branchOptions(),
         ]);
     }
 
@@ -64,7 +86,8 @@ class PromoController extends Controller
 
         return Inertia::render('promo/Edit', [
             'promo' => $this->formatPromo($promoModel),
-            'products' => $this->productOptions(),
+            'businesses' => $this->businessOptions(),
+            'branches' => $this->branchOptions(),
         ]);
     }
 
@@ -129,35 +152,41 @@ class PromoController extends Controller
         return $this->promoDatatable->printExcel($request, $this->loggedUser);
     }
 
-    private function productOptions(): array
+    private function businessOptions(): array
     {
-        return $this->productService
-            ->getByOwnerId($this->loggedUser->id)
-            ->map(fn ($product) => [
-                'value' => (string) $product->id,
-                'label' => $product->name,
-            ])
-            ->toArray();
+        return $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id);
+    }
+
+    private function branchOptions(): array
+    {
+        return $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id);
     }
 
     private function formatPromo($promo): array
     {
         return [
             'id' => $promo->id,
-            'product' => [
-                'id' => $promo->product->id,
-                'name' => $promo->product->name,
-                'price' => $promo->product->price,
-                'category' => [
-                    'id' => $promo->product->category?->id,
-                    'name' => $promo->product->category?->name,
-                ],
-            ],
-            'product_id' => $promo->product_id,
+            'product' => $promo->product
+                ? [
+                    'id' => $promo->product->id,
+                    'name' => $promo->product->name,
+                    'price' => $promo->product->price,
+                    'category' => [
+                        'id' => $promo->product->category?->id,
+                        'name' => $promo->product->category?->name,
+                    ],
+                ]
+                : null,
+            'scope_type' => $promo->scope_type,
+            'scope_id' => $promo->scope_id ? (string) $promo->scope_id : '',
+            'scope_label' => $promo->scope_label,
             'start_date' => optional($promo->start_date)?->format('Y-m-d'),
             'end_date' => optional($promo->end_date)?->format('Y-m-d'),
             'percent_discount' => $promo->percent_discount,
             'price_discount' => $promo->price_discount,
+            'usage_limit' => $promo->usage_limit,
+            'used_count' => $promo->used_count,
+            'impacted_products' => $promo->impacted_products,
         ];
     }
 }

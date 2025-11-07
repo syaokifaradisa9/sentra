@@ -1,19 +1,35 @@
 import { useForm } from "@inertiajs/react";
-import { CalendarDays, Percent, Save, Tag } from "lucide-react";
+import { CalendarDays, Percent, Save } from "lucide-react";
 import Button from "../../components/buttons/Button";
 import FormInput from "../../components/forms/FormInput";
 import FormSelect from "../../components/forms/FormSelect";
 import ContentCard from "../../components/layouts/ContentCard";
 import RootLayout from "../../components/layouts/RootLayout";
 
-export default function PromoCreate({ products = [] }) {
+export default function PromoCreate({
+    businesses = [],
+    branches = [],
+}) {
     const { data, setData, post, processing, errors } = useForm({
-        product_id: "",
+        scope_type: "product",
+        scope_id: "",
         start_date: "",
         end_date: "",
         percent_discount: "",
         price_discount: "",
+        usage_limit: "",
     });
+
+    const scopeType = data.scope_type;
+
+    const handleScopeTypeChange = (event) => {
+        const { value } = event.target;
+        setData((prev) => ({
+            ...prev,
+            scope_type: value,
+            scope_id: "",
+        }));
+    };
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -25,18 +41,58 @@ export default function PromoCreate({ products = [] }) {
             <ContentCard title="Tambah Promo" backPath="/promos">
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <FormSelect
-                        name="product_id"
-                        label="Produk"
-                        value={data.product_id}
-                        onChange={(event) =>
-                            setData("product_id", event.target.value)
-                        }
-                        options={products}
-                        placeholder="Pilih produk"
-                        error={errors.product_id}
+                        name="scope_type"
+                        label="Jenis Promo"
+                        value={data.scope_type}
+                        onChange={handleScopeTypeChange}
+                        options={[
+                            { value: "product", label: "Per Produk (Semua Produk)" },
+                            { value: "business", label: "Per Bisnis" },
+                            { value: "branch", label: "Per Cabang" },
+                        ]}
+                        placeholder="Pilih cakupan promo"
+                        error={errors.scope_type}
                         required
-                        icon={<Tag className="size-4" />}
                     />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Pilih cakupan promo: semua produk, bisnis tertentu, atau cabang tertentu.
+                    </p>
+
+                    {scopeType === "business" && (
+                        <FormSelect
+                            name="scope_id"
+                            label="Pilih Bisnis"
+                            value={data.scope_id}
+                            onChange={(event) =>
+                                setData("scope_id", event.target.value)
+                            }
+                            options={businesses.map((business) => ({
+                                value: business.id,
+                                label: business.name,
+                            }))}
+                            placeholder="Pilih bisnis"
+                            error={errors.scope_id}
+                            required
+                        />
+                    )}
+
+                    {scopeType === "branch" && (
+                        <FormSelect
+                            name="scope_id"
+                            label="Pilih Cabang"
+                            value={data.scope_id}
+                            onChange={(event) =>
+                                setData("scope_id", event.target.value)
+                            }
+                            options={branches.map((branch) => ({
+                                value: branch.id,
+                                label: branch.name,
+                            }))}
+                            placeholder="Pilih cabang"
+                            error={errors.scope_id}
+                            required
+                        />
+                    )}
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <FormInput
@@ -95,6 +151,18 @@ export default function PromoCreate({ products = [] }) {
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                         Isi minimal salah satu jenis diskon.
                     </p>
+
+                    <FormInput
+                        name="usage_limit"
+                        type="number"
+                        label="Kuota Promo (opsional)"
+                        value={data.usage_limit}
+                        onChange={(event) =>
+                            setData("usage_limit", event.target.value)
+                        }
+                        error={errors.usage_limit}
+                        placeholder="Contoh: 100"
+                    />
 
                     <Button
                         type="submit"
