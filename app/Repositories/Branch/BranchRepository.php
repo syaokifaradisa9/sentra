@@ -13,4 +13,6 @@ interface BranchRepository
     public function delete(int $id): bool;
     public function all(): Collection;
     public function getByOwnerId(int $userId): Collection;
+    public function getByUserId(int $userId): Collection;
+    public function getByBusinessId(int $businessId): Collection;
 }

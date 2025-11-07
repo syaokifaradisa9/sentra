@@ -6,24 +6,29 @@ use App\DataTransferObjects\EmployeeDTO;
 use App\Http\Requests\EmployeeRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\User;
+use App\Services\BusinessService;
 use App\Services\EmployeeService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class EmployeeController extends Controller
 {
+    private $loggedUser;
+
     public function __construct(
         private EmployeeService $employeeService,
-    ) {}
+        private BusinessService $businessService,
+        private \App\Datatables\EmployeeDatatableService $employeeDatatable,
+    ) {
+        $this->loggedUser = Auth::user();
+    }
 
     public function index(): InertiaResponse
     {
@@ -32,8 +37,37 @@ class EmployeeController extends Controller
 
     public function create(): InertiaResponse
     {
+        $userId = $this->loggedUser->id;
+
+        $businesses = collect();
+        if ($this->loggedUser->hasRole('Businessman')) {
+            $businesses = $this->businessService
+                ->getByOwnerId($userId)
+                ->map(static fn ($business) => [
+                    'id' => $business->id,
+                    'name' => $business->name,
+                ])
+                ->values();
+        }
+
+        $branches = $this->employeeService
+            ->getBranchesForUser($userId)
+            ->map(static fn ($branch) => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'business_id' => $branch->business_id,
+            ])
+            ->values();
+
+        $defaultBranchIds = $this->loggedUser->hasRole('SmallBusinessOwner')
+            ? $branches->pluck('id')->take(1)->values()
+            : collect();
+
         return Inertia::render('employee/Create', [
-            'branches' => $this->mappedBranchesForUser(),
+            'businesses' => $businesses->toArray(),
+            'branches' => $branches->toArray(),
+            'currentRole' => $this->loggedUser->getRoleNames()->first(),
+            'defaultBranchIds' => $defaultBranchIds->toArray(),
         ]);
     }
 
@@ -41,10 +75,13 @@ class EmployeeController extends Controller
     {
         try {
             $this->employeeService->store(
-                EmployeeDTO::fromAppRequest($request)
+                EmployeeDTO::fromAppRequest($request),
+                $this->loggedUser->id
             );
 
             return to_route('employees.index')->with('success', 'Karyawan berhasil dibuat');
+        } catch (ValidationException $exception) {
+            throw $exception;
         } catch (Exception $exception) {
             report($exception);
 
@@ -60,6 +97,30 @@ class EmployeeController extends Controller
             abort(404);
         }
 
+        $userId = $this->loggedUser->id;
+
+        $businesses = collect();
+        if ($this->loggedUser->hasRole('Businessman')) {
+            $businesses = $this->businessService
+                ->getByOwnerId($userId)
+                ->map(static fn ($business) => [
+                    'id' => $business->id,
+                    'name' => $business->name,
+                ])
+                ->values();
+        }
+
+        $branches = $this->employeeService
+            ->getBranchesForUser($userId)
+            ->map(static fn ($branch) => [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'business_id' => $branch->business_id,
+            ])
+            ->values();
+
+        $selectedBusinessId = $employeeModel->branches->first()?->business_id;
+
         return Inertia::render('employee/Edit', [
             'employee' => [
                 'id' => $employeeModel->id,
@@ -68,9 +129,12 @@ class EmployeeController extends Controller
                 'phone' => $employeeModel->phone,
                 'address' => $employeeModel->address,
                 'position' => $employeeModel->position,
-                'branch_ids' => $employeeModel->branches->pluck('id')->values(),
+            'branch_ids' => $employeeModel->branches->pluck('id')->values()->all(),
+                'business_id' => $selectedBusinessId,
             ],
-            'branches' => $this->mappedBranchesForUser(),
+            'businesses' => $businesses->toArray(),
+            'branches' => $branches->toArray(),
+            'currentRole' => $this->loggedUser->getRoleNames()->first(),
         ]);
     }
 
@@ -79,7 +143,8 @@ class EmployeeController extends Controller
         try {
             $updatedEmployee = $this->employeeService->update(
                 $employee->id,
-                EmployeeDTO::fromAppRequest($request)
+                EmployeeDTO::fromAppRequest($request),
+                $this->loggedUser->id
             );
 
             if (! $updatedEmployee) {
@@ -87,6 +152,8 @@ class EmployeeController extends Controller
             }
 
             return to_route('employees.index')->with('success', 'Karyawan berhasil diperbarui');
+        } catch (ValidationException $exception) {
+            throw $exception;
         } catch (Exception $exception) {
             report($exception);
 
@@ -111,74 +178,24 @@ class EmployeeController extends Controller
         }
     }
 
-    public function datatable(Request $request): JsonResponse
+    public function datatable(DatatableRequest $request)
     {
-        $paginator = $this->employeeService->paginateForUser($request->all(), auth()->id());
-
-        return response()->json($paginator);
+        return $this->employeeDatatable->getDatatable($request, $this->loggedUser);
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        $records = $this->employeeService->getForExport($request->validated(), auth()->id());
-
-        $pdf = Pdf::loadView('reports.employees', [
-            'records' => $records,
-        ])->setPaper('A4', 'landscape');
-
+        $pdfContent = $this->employeeDatatable->printPdf($request, $this->loggedUser);
         $fileName = 'laporan-karyawan-' . now()->format('Ymd_His') . '.pdf';
 
-        return $pdf->stream($fileName);
+        return response()->make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     public function printExcel(DatatableRequest $request)
     {
-        $records = $this->employeeService->getForExport($request->validated(), auth()->id());
-
-        $spreadsheet = new Spreadsheet();
-        $worksheet = $spreadsheet->getActiveSheet();
-
-        $headers = ['No', 'Nama', 'Email', 'Telepon', 'Alamat', 'Jabatan', 'Cabang'];
-        foreach ($headers as $index => $header) {
-            $columnLetter = chr(65 + $index);
-            $worksheet->setCellValue("{$columnLetter}1", $header);
-            $worksheet->getStyle("{$columnLetter}1")->getAlignment()->setHorizontal('center')->setVertical('center');
-            $worksheet->getColumnDimension($columnLetter)->setAutoSize(true);
-        }
-
-        foreach ($records as $rowIndex => $record) {
-            $rowNumber = $rowIndex + 2;
-            $worksheet->setCellValue("A{$rowNumber}", $rowIndex + 1);
-            $worksheet->setCellValue("B{$rowNumber}", $record->name);
-            $worksheet->setCellValue("C{$rowNumber}", $record->email);
-            $worksheet->setCellValue("D{$rowNumber}", $record->phone);
-            $worksheet->setCellValue("E{$rowNumber}", $record->address);
-            $worksheet->setCellValue("F{$rowNumber}", $record->position);
-            $branchNames = $record->branches->pluck('name')->implode(', ');
-            $worksheet->setCellValue("G{$rowNumber}", $branchNames ?: '-');
-            $worksheet->getStyle("A{$rowNumber}")
-                ->getAlignment()
-                ->setHorizontal('center')
-                ->setVertical('center');
-        }
-
-        $fileName = 'Laporan Data Karyawan Per ' . now()->format('d F Y') . '.xlsx';
-        $filePath = storage_path('app/public/' . $fileName);
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($filePath);
-
-        return Response::download($filePath)->deleteFileAfterSend(true);
-    }
-
-    private function mappedBranchesForUser(): Collection
-    {
-        return $this->employeeService
-            ->getBranchesForUser(auth()->id())
-            ->map(static fn ($branch) => [
-                'id' => $branch->id,
-                'name' => $branch->name,
-            ])
-            ->values();
+        return $this->employeeDatatable->printExcel($request, $this->loggedUser);
     }
 }

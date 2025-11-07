@@ -13,6 +13,7 @@ class EmployeeDTO
         public string $phone,
         public string $address,
         public string $position,
+        public ?int $businessId = null,
         public array $branchIds = [],
     ) {}
 
@@ -27,6 +28,7 @@ class EmployeeDTO
             phone: $validated['phone'],
             address: $validated['address'],
             position: $validated['position'],
+            businessId: isset($validated['business_id']) ? (int) $validated['business_id'] : null,
             branchIds: $validated['branch_ids'] ?? [],
         );
     }

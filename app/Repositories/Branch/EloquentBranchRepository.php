@@ -55,4 +55,18 @@ class EloquentBranchRepository implements BranchRepository
     {
         return $this->model->where('owner_id', $userId)->get();
     }
+
+    public function getByUserId(int $userId): Collection
+    {
+        return $this->model
+            ->whereHas('users', function ($query) use ($userId) {
+                $query->where('users.id', $userId);
+            })
+            ->get();
+    }
+
+    public function getByBusinessId(int $businessId): Collection
+    {
+        return $this->model->where('business_id', $businessId)->get();
+    }
 }
