@@ -1,6 +1,7 @@
 import ContentCard from "../../components/layouts/ContentCard";
 import RootLayout from "../../components/layouts/RootLayout";
 import { useForm } from "@inertiajs/react";
+import { Save } from "lucide-react";
 import Button from "../../components/buttons/Button";
 import FormInput from "../../components/forms/FormInput";
 import FormTextArea from "../../components/forms/FormTextArea";
@@ -43,6 +44,7 @@ export default function BusinessCreate() {
                         />
                     </div>
                     <Button
+                        icon={<Save className="size-4" />}
                         label="Simpan"
                         type="submit"
                         isLoading={processing}

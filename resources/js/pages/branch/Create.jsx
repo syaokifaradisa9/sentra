@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useForm } from "@inertiajs/react";
+import { Save } from "lucide-react";
 import RootLayout from "../../components/layouts/RootLayout";
 import ContentCard from "../../components/layouts/ContentCard";
 import FormSelect from "../../components/forms/FormSelect";
@@ -98,6 +99,7 @@ export default function BranchCreate({ businesses = [] }) {
                     </div>
 
                     <Button
+                        icon={<Save className="size-4" />}
                         type="submit"
                         label="Simpan"
                         isLoading={processing}
@@ -108,4 +110,3 @@ export default function BranchCreate({ businesses = [] }) {
         </RootLayout>
     );
 }
-

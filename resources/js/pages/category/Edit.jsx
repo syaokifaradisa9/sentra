@@ -1,4 +1,5 @@
 import { useForm } from "@inertiajs/react";
+import { Save } from "lucide-react";
 import RootLayout from "../../components/layouts/RootLayout";
 import ContentCard from "../../components/layouts/ContentCard";
 import FormInput from "../../components/forms/FormInput";
@@ -117,6 +118,7 @@ export default function CategoryEdit({ category, branches = [] }) {
                     </div>
 
                     <Button
+                        icon={<Save className="size-4" />}
                         type="submit"
                         label="Simpan Perubahan"
                         isLoading={processing}
