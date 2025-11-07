@@ -16,6 +16,7 @@ class CategoryRequest extends FormRequest
         $commonRules = [
             'branch_ids' => 'nullable|array',
             'branch_ids.*' => 'integer|exists:branches,id',
+            'icon' => 'nullable|string|max:100',
         ];
 
         if ($this->isMethod('post')) {
@@ -42,6 +43,8 @@ class CategoryRequest extends FormRequest
             'branch_ids.array' => 'Pilihan cabang tidak valid.',
             'branch_ids.*.integer' => 'Pilihan cabang tidak valid.',
             'branch_ids.*.exists' => 'Pilihan cabang tidak tersedia.',
+            'icon.string' => 'Ikon kategori harus berupa teks yang valid.',
+            'icon.max' => 'Nama ikon maksimal 100 karakter.',
         ];
     }
 }

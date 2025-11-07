@@ -58,6 +58,7 @@ export default function ProfileDropdown() {
                         </Link>
                         <Link
                             href="/auth/logout"
+                            method="post"
                             className="flex items-center w-full gap-2 px-3 py-2 text-sm text-white bg-red-600 rounded-lg"
                         >
                             <LogOut className="size-4" />

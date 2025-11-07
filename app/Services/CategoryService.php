@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Repositories\Branch\BranchRepository;
 use App\Repositories\Category\CategoryRepository;
 use App\Repositories\CategoryBranch\CategoryBranchRepository;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -27,33 +26,29 @@ class CategoryService
     public function getById(int $id): ?Category
     {
         $category = $this->categoryRepository->getById($id);
-
         return $category?->load('branches');
     }
 
-    public function store(CategoryDTO $dto, int $userId): Category
+    public function store(CategoryDTO $dto): Category
     {
-        return DB::transaction(function () use ($dto, $userId) {
+        return DB::transaction(function () use ($dto) {
             $category = $this->categoryRepository->store($dto->toArray());
-
-            $this->syncCategoryBranches($category->id, $dto->branchIds, $userId);
+            $this->syncCategoryBranches($category->id, $dto->branchIds);
 
             return $category->load('branches');
         });
     }
 
-    public function update(int $id, CategoryDTO $dto, int $userId): ?Category
+    public function update(int $id, CategoryDTO $dto): ?Category
     {
-        return DB::transaction(function () use ($id, $dto, $userId) {
-            $category = $this->categoryRepository->update($id, $dto->toArray());
+        return DB::transaction(function () use ($id, $dto) {
+            $this->categoryRepository->update($id, [
+                'name' => $dto->name
+            ]);
+            
+            $this->syncCategoryBranches($id, $dto->branchIds);
 
-            if (! $category) {
-                return null;
-            }
-
-            $this->syncCategoryBranches($id, $dto->branchIds, $userId);
-
-            return $category->load('branches');
+            return $this->categoryRepository->getById($id)?->load('branches');
         });
     }
 
@@ -66,58 +61,34 @@ class CategoryService
         });
     }
 
-    public function getBranchesForUser(int $userId): Collection
+    private function syncCategoryBranches(int $categoryId, array $branchIds): void
     {
-        return $this->branchRepository->getByUserId($userId);
-    }
-
-    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
-    {
-        $branchIds = $this->branchRepository
-            ->getByUserId($userId)
-            ->pluck('id')
-            ->toArray();
-
-        return $this->categoryRepository->paginateForBranchIds($branchIds, $filters);
-    }
-
-    public function getForExport(array $filters, int $userId): Collection
-    {
-        $branchIds = $this->branchRepository
-            ->getByUserId($userId)
-            ->pluck('id')
-            ->toArray();
-
-        return $this->categoryRepository->getForBranchIds($branchIds, $filters);
-    }
-
-    private function syncCategoryBranches(int $categoryId, array $branchIds, int $userId): void
-    {
-        $branchIds = array_unique(array_map('intval', $branchIds));
-
-        $userBranchIds = $this->branchRepository
-            ->getByUserId($userId)
-            ->pluck('id')
-            ->toArray();
-
-        $validBranchIds = array_values(array_intersect($userBranchIds, $branchIds));
-
         $this->categoryBranchRepository->deleteByCategoryId($categoryId);
 
-        if (empty($validBranchIds)) {
-            return;
-        }
-
-        $timestamp = now();
-        $payload = array_map(static function (int $branchId) use ($categoryId, $timestamp) {
+        $payload = array_map(static function (int $branchId) use ($categoryId) {
             return [
                 'category_id' => $categoryId,
                 'branch_id' => $branchId,
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
             ];
-        }, $validBranchIds);
+        }, $branchIds);
 
         $this->categoryBranchRepository->batchInsert($payload);
+    }
+
+    public function getByOwnerId(int $ownerId): Collection
+    {
+        return $this->categoryRepository->getByOwnerId($ownerId);
+    }
+
+    public function getOptionsByOwnerId(int $userId): array
+    {
+        $categories = $this->categoryRepository->getByOwnerId($userId);
+        
+        return $categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->name,
+            ];
+        })->toArray();
     }
 }

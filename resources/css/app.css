@@ -141,3 +141,25 @@
         @apply bg-background text-foreground;
     }
 }
+
+.scrollbar-elegant {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+.scrollbar-elegant::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-elegant::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-elegant::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background: rgba(148, 163, 184, 0.25);
+}
+
+.scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.4);
+}

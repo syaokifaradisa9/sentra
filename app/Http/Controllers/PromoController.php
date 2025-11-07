@@ -1,0 +1,241 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\DataTransferObjects\PromoDTO;
+use App\Datatables\PromoDatatableService;
+use App\Http\Requests\Common\DatatableRequest;
+use App\Http\Requests\PromoRequest;
+use App\Services\BranchService;
+use App\Services\BusinessService;
+use App\Services\ProductService;
+use App\Services\PromoService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
+use Throwable;
+
+class PromoController extends Controller
+{
+    private $loggedUser;
+
+    public function __construct(
+        private PromoService $promoService,
+        private PromoDatatableService $promoDatatable,
+        private BusinessService $businessService,
+        private BranchService $branchService,
+        private ProductService $productService,
+    ) {
+        $this->loggedUser = Auth::user();
+    }
+
+    public function index(): InertiaResponse
+    {
+        return Inertia::render('promo/Index', [
+            'analytics' => $this->promoService->getAnalyticsSummary($this->loggedUser->id),
+            'priceHistories' => $this->promoService
+                ->getRecentPriceHistories($this->loggedUser->id)
+                ->map(fn ($history) => [
+                    'id' => $history->id,
+                    'promo' => [
+                        'id' => $history->promo_id,
+                        'label' => $history->promo->scope_label ?? 'Promo',
+                    ],
+                    'product' => [
+                        'id' => $history->product_id,
+                        'name' => $history->product->name ?? '-',
+                    ],
+                    'base_price' => $history->base_price,
+                    'promo_price' => $history->promo_price,
+                    'recorded_at' => optional($history->recorded_at)->toDateTimeString(),
+                ])
+                ->toArray(),
+        ]);
+    }
+
+    public function create(): InertiaResponse
+    {
+        return Inertia::render('promo/Create', [
+            'products' => $this->productOptionPayload(),
+            'businesses' => $this->businessOptions(),
+            'branches' => $this->branchOptions(),
+        ]);
+    }
+
+    public function store(PromoRequest $request): RedirectResponse
+    {
+        try {
+            $this->promoService->store(
+                PromoDTO::fromAppRequest($request),
+                $this->loggedUser->id
+            );
+
+            return to_route('promos.index')->with('success', 'Promo berhasil dibuat');
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            report($exception);
+            return back()->withInput()->with('error', 'Gagal membuat promo');
+        }
+    }
+
+    public function edit(int $promo): InertiaResponse
+    {
+        $promoModel = $this->promoService->findForUser($promo, $this->loggedUser->id);
+
+        abort_if(! $promoModel, 404);
+
+        return Inertia::render('promo/Edit', [
+            'promo' => $this->formatPromo($promoModel),
+            'products' => $this->productOptionPayload(),
+            'businesses' => $this->businessOptions(),
+            'branches' => $this->branchOptions(),
+        ]);
+    }
+
+    public function update(PromoRequest $request, int $promo): RedirectResponse
+    {
+        try {
+            $updated = $this->promoService->update(
+                $promo,
+                PromoDTO::fromAppRequest($request),
+                $this->loggedUser->id
+            );
+
+            if (! $updated) {
+                return back()->withInput()->with('error', 'Promo tidak ditemukan');
+            }
+
+            return to_route('promos.index')->with('success', 'Promo berhasil diperbarui');
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->withInput()->with('error', 'Gagal memperbarui promo');
+        }
+    }
+
+    public function destroy(int $promo): RedirectResponse
+    {
+        try {
+            $deleted = $this->promoService->delete($promo, $this->loggedUser->id);
+
+            if (! $deleted) {
+                return back()->with('error', 'Promo tidak ditemukan');
+            }
+
+            return to_route('promos.index')->with('success', 'Promo berhasil dihapus');
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return back()->with('error', 'Gagal menghapus promo');
+        }
+    }
+
+    public function datatable(DatatableRequest $request)
+    {
+        return $this->promoDatatable->getDatatable($request, $this->loggedUser);
+    }
+
+    public function printPdf(DatatableRequest $request)
+    {
+        $pdfContent = $this->promoDatatable->printPdf($request, $this->loggedUser);
+        $fileName = 'laporan-promo-' . now()->format('Ymd_His') . '.pdf';
+
+        return response()->make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
+    }
+
+    public function printExcel(DatatableRequest $request)
+    {
+        return $this->promoDatatable->printExcel($request, $this->loggedUser);
+    }
+
+    private function businessOptions(): array
+    {
+        return $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id);
+    }
+
+    private function branchOptions(): array
+    {
+        return $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id);
+    }
+
+    private function productOptionPayload(): array
+    {
+        $products = $this->productService
+            ->getByOwnerId($this->loggedUser->id)
+            ->map(function ($product) {
+                $product->loadMissing(['branches']);
+                return $product;
+            });
+
+        $all = [];
+        $byBusiness = [];
+        $byBranch = [];
+
+        foreach ($products as $product) {
+            $option = [
+                'value' => (string) $product->id,
+                'label' => $product->name,
+            ];
+
+            $all[] = $option;
+
+            $businessIds = $product->branches
+                ->pluck('business_id')
+                ->filter()
+                ->unique()
+                ->all();
+
+            foreach ($businessIds as $businessId) {
+                $byBusiness[$businessId][] = $option;
+            }
+
+            foreach ($product->branches as $branch) {
+                $byBranch[$branch->id][] = $option;
+            }
+        }
+
+        return [
+            'all' => $all,
+            'by_business' => array_map('array_values', $byBusiness),
+            'by_branch' => array_map('array_values', $byBranch),
+        ];
+    }
+
+    private function formatPromo($promo): array
+    {
+        $product = $promo->product;
+
+        return [
+            'id' => $promo->id,
+            'product' => $product
+                ? [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'category' => [
+                        'id' => $product->category?->id,
+                        'name' => $product->category?->name,
+                    ],
+                ]
+                : null,
+            'scope_type' => $promo->scope_type,
+            'scope_id' => $promo->scope_id ? (string) $promo->scope_id : '',
+            'scope_label' => $promo->scope_label,
+            'start_date' => optional($promo->start_date)?->format('Y-m-d'),
+            'end_date' => optional($promo->end_date)?->format('Y-m-d'),
+            'percent_discount' => $promo->percent_discount,
+            'price_discount' => $promo->price_discount,
+            'usage_limit' => $promo->usage_limit,
+            'used_count' => $promo->used_count,
+            'impacted_products' => $promo->impacted_products,
+        ];
+    }
+}

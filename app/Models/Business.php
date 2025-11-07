@@ -10,7 +10,7 @@ class Business extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'owner_id',
         'name',
         'description',
     ];
@@ -18,5 +18,10 @@ class Business extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function branches()
+    {
+        return $this->hasMany(Branch::class);
     }
 }

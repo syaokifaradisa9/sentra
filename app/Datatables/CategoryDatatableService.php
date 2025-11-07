@@ -2,17 +2,19 @@
 
 namespace App\Datatables;
 
-use App\Models\Business;
+use App\Models\Category;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use App\Http\Requests\Common\DatatableRequest;
 
-class BusinessDatatable {
+class CategoryDatatableService {
+
     private function getStartedQuery(DatatableRequest $request, $loggedUser){
-        $query = Business::whereUserId($loggedUser->id);
+        $query = Category::whereHas('branches', function ($q) use ($loggedUser) {
+            $q->where('owner_id', $loggedUser->id);
+        });
 
         // Handle sorting
         $sortColumn = $request->input('sort_by', 'name');
@@ -20,7 +22,7 @@ class BusinessDatatable {
 
         // Validate sort column to prevent injection
         $allowedSortColumns = [
-            'name', 'description'
+            'name'
         ];
 
         if (in_array($sortColumn, $allowedSortColumns)) {
@@ -31,18 +33,15 @@ class BusinessDatatable {
 
         if($request->search){
             $query->where(function($query) use($request){
-                $query->where("name", "like", "%$request->search%")
-                    ->orWhere("description", "like", "%$request->search%");
+                $query->where("name", "like", "%$request->search%");
             });
         }
 
         $query->when($request->name, function($query, $search){
             $query->where("name", "like", "%{$search}%");
-        })->when($request->description, function($query, $search){
-            $query->where("description", "like", "%{$search}%");
         });
 
-        return $query;
+        return $query->with('branches');
     }
 
     public function getDatatable(DatatableRequest $request, $loggedUser, $additionalData = []){
@@ -56,7 +55,7 @@ class BusinessDatatable {
 
     public function printPdf(DatatableRequest $request, $loggedUser, $additionalData = []){
         $records = $this->getStartedQuery($request, $loggedUser)->get();
-        return Pdf::loadView("reports.business", [
+        return Pdf::loadView("reports.categories", [
             'records' => $records
         ])->setPaper("A4", "landscape")->output();
     }
@@ -70,8 +69,8 @@ class BusinessDatatable {
         $columnindex = 'A';
         foreach([
             "No",
-            "Nama Bisnis",
-            "Deskripsi",
+            "Nama Kategori",
+            "Cabang",
         ] as $columnName){
             $worksheet->setCellValue($columnindex . '1', $columnName);
             $worksheet->getColumnDimension($columnindex)->setAutoSize(true);
@@ -84,7 +83,8 @@ class BusinessDatatable {
 
             $worksheet->setCellValue("A" . $numCell, $index + 1);
             $worksheet->setCellValue("B" . $numCell, $record->name);
-            $worksheet->setCellValue("C" . $numCell, $record->description);
+            $branchNames = $record->branches->pluck('name')->implode(', ');
+            $worksheet->setCellValue("C" . $numCell, $branchNames ?: '-');
 
             foreach(["A"] as $letter){
                 $worksheet->getStyle($letter . $numCell)
@@ -95,7 +95,7 @@ class BusinessDatatable {
         }
 
         $date = date("d F Y");
-        $fileName = "Laporan Data Master Bisnis Per $date.xlsx";
+        $fileName = "Laporan Data Master Kategori Per $date.xlsx";
 
         $writer = new Xlsx($spreadsheet);
         $writer->save(storage_path("app/public/$fileName"));
@@ -105,5 +105,3 @@ class BusinessDatatable {
         )->deleteFileAfterSend(true);
     }
 }
-
-?>

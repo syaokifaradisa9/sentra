@@ -1,14 +1,17 @@
 import { useForm } from "@inertiajs/react";
+import { Save } from "lucide-react";
 import RootLayout from "../../components/layouts/RootLayout";
 import ContentCard from "../../components/layouts/ContentCard";
 import FormInput from "../../components/forms/FormInput";
 import FormCheckbox from "../../components/forms/FormCheckBox";
 import Button from "../../components/buttons/Button";
+import { CATEGORY_ICONS } from "../../constants/categoryIcons";
 
 export default function CategoryCreate({ branches = [] }) {
     const { data, setData, post, processing, errors } = useForm({
         name: "",
         branch_ids: [],
+        icon: null,
     });
 
     const branchErrorKey = Object.keys(errors).find((key) =>
@@ -47,6 +50,40 @@ export default function CategoryCreate({ branches = [] }) {
 
                     <div className="space-y-3">
                         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                            Ikon Kategori
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            Pilih ikon dari koleksi Lucide. Anda dapat melewati pilihan ini.
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                            {CATEGORY_ICONS.map((option) => {
+                                const IconComponent = option.icon;
+                                const isActive = data.icon === option.value;
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => setData("icon", option.value)}
+                                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-medium transition ${
+                                            isActive
+                                                ? "border-primary bg-primary/10 text-primary shadow-sm dark:border-teal-400 dark:bg-teal-400/10 dark:text-teal-200"
+                                                : "border-slate-200 text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-700 dark:text-slate-300 dark:hover:border-teal-400/40 dark:hover:text-teal-200"
+                                        }`}
+                                        aria-pressed={isActive}
+                                    >
+                                        <IconComponent className="h-4 w-4" />
+                                        <span>{option.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {errors.icon && (
+                            <p className="text-sm text-red-600">{errors.icon}</p>
+                        )}
+                    </div>
+
+                    <div className="space-y-3">
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
                             Cabang
                         </p>
                         {branches.length === 0 ? (
@@ -74,6 +111,7 @@ export default function CategoryCreate({ branches = [] }) {
                     </div>
 
                     <Button
+                        icon={<Save className="size-4" />}
                         type="submit"
                         label="Simpan"
                         isLoading={processing}

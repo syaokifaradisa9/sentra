@@ -89,6 +89,18 @@ class EloquentProductRepository implements ProductRepository
         return $this->buildQueryForUser($userId, $filters)->get();
     }
 
+    public function getByIds(array $ids): Collection
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+
+        return $this->model
+            ->newQuery()
+            ->whereIn('id', $ids)
+            ->get();
+    }
+
     private function buildQueryForUser(int $userId, array $filters): Builder
     {
         $query = $this->model
@@ -96,7 +108,7 @@ class EloquentProductRepository implements ProductRepository
             ->with(['category.branches', 'branches']);
 
         $query->whereHas('branches', function ($builder) use ($userId) {
-            $builder->where('branches.user_id', $userId);
+            $builder->where('branches.owner_id', $userId);
         });
 
         $search = $filters['search'] ?? null;

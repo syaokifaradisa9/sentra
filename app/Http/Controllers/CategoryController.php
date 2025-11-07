@@ -2,28 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Datatables\CategoryDatatableService;
 use App\DataTransferObjects\CategoryDTO;
 use App\Http\Requests\CategoryRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Category;
+use App\Services\BranchService;
+use App\Services\BusinessService;
 use App\Services\CategoryService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class CategoryController extends Controller
 {
+    private $loggedUser;
     public function __construct(
         private CategoryService $categoryService,
-    ) {}
+        private CategoryDatatableService $categoryDatatable,
+        private BranchService $branchService,
+        private BusinessService $businessService
+    ) {
+        $this->loggedUser = Auth::user();
+    }
 
     public function index(): InertiaResponse
     {
@@ -33,7 +38,7 @@ class CategoryController extends Controller
     public function create(): InertiaResponse
     {
         return Inertia::render('category/Create', [
-            'branches' => $this->mappedBranchesForUser(),
+            'branches' => $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id),
         ]);
     }
 
@@ -42,7 +47,7 @@ class CategoryController extends Controller
         try {
             $this->categoryService->store(
                 CategoryDTO::fromAppRequest($request),
-                auth()->id()
+                $this->loggedUser->id
             );
 
             return to_route('categories.index')->with('success', 'Kategori berhasil dibuat');
@@ -62,12 +67,8 @@ class CategoryController extends Controller
         }
 
         return Inertia::render('category/Edit', [
-            'category' => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'branch_ids' => $category->branches->pluck('id')->values(),
-            ],
-            'branches' => $this->mappedBranchesForUser(),
+            'category' => $category,
+            'branches' => $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id),
         ]);
     }
 
@@ -77,7 +78,7 @@ class CategoryController extends Controller
             $updatedCategory = $this->categoryService->update(
                 $category->id,
                 CategoryDTO::fromAppRequest($request),
-                auth()->id()
+                $this->loggedUser->id
             );
 
             if (! $updatedCategory) {
@@ -97,7 +98,7 @@ class CategoryController extends Controller
         try {
             $deleted = $this->categoryService->delete($category->id);
 
-            if (! $deleted) {
+            if (!$deleted) {
                 return back()->with('error', 'Gagal menghapus kategori');
             }
 
@@ -109,73 +110,26 @@ class CategoryController extends Controller
         }
     }
 
-    public function datatable(Request $request): JsonResponse
+    public function datatable(DatatableRequest $request)
     {
-        $paginator = $this->categoryService->paginateForUser($request->all(), auth()->id());
-
-        return response()->json($paginator);
+        return $this->categoryDatatable->getDatatable($request, $this->loggedUser);
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        $records = $this->categoryService->getForExport($request->validated(), auth()->id());
+        $pdfContent =  $this->categoryDatatable->printPdf($request, $this->loggedUser);
+        $fileName = 'Laporan Kategori Per ' . date("d F Y") . '.pdf';
 
-        $pdf = Pdf::loadView('reports.categories', [
-            'records' => $records,
-        ])->setPaper('A4', 'landscape');
-
-        $fileName = 'laporan-kategori-' . now()->format('Ymd_His') . '.pdf';
-
-        return $pdf->stream($fileName);
+        return response()->make($pdfContent, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     public function printExcel(DatatableRequest $request)
     {
-        $records = $this->categoryService->getForExport($request->validated(), auth()->id());
-
-        $spreadsheet = new Spreadsheet();
-        $worksheet = $spreadsheet->getActiveSheet();
-
-        $headers = ['No', 'Nama Kategori', 'Cabang'];
-        foreach ($headers as $index => $header) {
-            $columnLetter = chr(65 + $index);
-            $worksheet->setCellValue("{$columnLetter}1", $header);
-            $worksheet->getStyle("{$columnLetter}1")->getAlignment()->setHorizontal('center')->setVertical('center');
-            $worksheet->getColumnDimension($columnLetter)->setAutoSize(true);
-        }
-
-        foreach ($records as $rowIndex => $record) {
-            $rowNumber = $rowIndex + 2;
-            $worksheet->setCellValue("A{$rowNumber}", $rowIndex + 1);
-            $worksheet->setCellValue("B{$rowNumber}", $record->name);
-            $branchNames = $record->branches->pluck('name')->implode(', ');
-            $worksheet->setCellValue("C{$rowNumber}", $branchNames ?: '-');
-            $worksheet->getStyle("A{$rowNumber}")
-                ->getAlignment()
-                ->setHorizontal('center')
-                ->setVertical('center');
-        }
-
-        $fileName = 'Laporan Data Kategori Per ' . now()->format('d F Y') . '.xlsx';
-        $filePath = storage_path('app/public/' . $fileName);
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($filePath);
-
-        return Response::download($filePath)->deleteFileAfterSend(true);
+        return $this->categoryDatatable->printExcel($request, $this->loggedUser);
     }
 
-    private function mappedBranchesForUser(): Collection
-    {
-        return $this->categoryService
-            ->getBranchesForUser(auth()->id())
-            ->map(static fn ($branch) => [
-                'id' => $branch->id,
-                'name' => $branch->name,
-            ])
-            ->values();
-    }
 }
-
-
 

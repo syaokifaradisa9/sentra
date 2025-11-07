@@ -3,8 +3,6 @@
 namespace App\Repositories\Business;
 
 use App\Models\Business;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class EloquentBusinessRepository implements BusinessRepository
@@ -29,23 +27,23 @@ class EloquentBusinessRepository implements BusinessRepository
     public function update(int $id, array $data): ?Business
     {
         $business = $this->model->find($id);
-        
+
         if ($business) {
             $business->update($data);
             return $business->fresh();
         }
-        
+
         return null;
     }
 
     public function delete(int $id): bool
     {
         $business = $this->model->find($id);
-        
+
         if ($business) {
             return $business->delete();
         }
-        
+
         return false;
     }
 
@@ -54,65 +52,9 @@ class EloquentBusinessRepository implements BusinessRepository
         return $this->model->all();
     }
 
-    public function getByUserId(int $userId): Collection
+    public function getByOwnerId(int $userId): Collection
     {
-        return $this->model->where('user_id', $userId)->get();
-    }
-
-    public function existsForUser(int $businessId, int $userId): bool
-    {
-        return $this->model
-            ->where('id', $businessId)
-            ->where('user_id', $userId)
-            ->exists();
-    }
-
-    public function paginateForUser(array $filters, int $userId): LengthAwarePaginator
-    {
-        $query = $this->buildQueryForUser($filters, $userId);
-
-        $limit = (int) ($filters['limit'] ?? 20);
-
-        return $query
-            ->paginate($limit > 0 ? $limit : 20)
-            ->withQueryString();
-    }
-
-    public function getForExport(array $filters, int $userId): Collection
-    {
-        return $this->buildQueryForUser($filters, $userId)->get();
-    }
-
-    private function buildQueryForUser(array $filters, int $userId): Builder
-    {
-        $query = $this->model->newQuery()->where('user_id', $userId);
-
-        $search = $filters['search'] ?? null;
-        if ($search) {
-            $query->where(function ($builder) use ($search) {
-                $builder->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        if (! empty($filters['name'])) {
-            $query->where('name', 'like', "%{$filters['name']}%");
-        }
-
-        if (! empty($filters['description'])) {
-            $query->where('description', 'like', "%{$filters['description']}%");
-        }
-
-        $allowedSortColumns = ['name', 'description', 'created_at', 'updated_at'];
-        $sortBy = $filters['sort_by'] ?? 'created_at';
-        if (! in_array($sortBy, $allowedSortColumns, true)) {
-            $sortBy = 'created_at';
-        }
-
-        $sortDirection = strtolower($filters['sort_direction'] ?? 'desc');
-        $sortDirection = $sortDirection === 'asc' ? 'asc' : 'desc';
-
-        return $query->orderBy($sortBy, $sortDirection);
+        return $this->model->where('owner_id', $userId)->get();
     }
 }
 

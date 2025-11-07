@@ -36,4 +36,10 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    public function branches()
+    {
+        return $this->belongsToMany(Branch::class, 'user_branches')
+            ->withTimestamps();
+    }
 }

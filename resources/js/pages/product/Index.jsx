@@ -120,6 +120,94 @@ export default function ProductIndex() {
         window.open(url, "_blank");
     };
 
+    const renderProductCard = (product) => {
+        const branches = product.branches ?? [];
+        const photoUrl = product.photo_url ?? null;
+
+        return (
+            <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-primary/5 dark:border-slate-700/60 dark:bg-slate-900/70">
+                <div className="flex gap-4">
+                    {photoUrl ? (
+                        <img
+                            src={photoUrl}
+                            alt={product.name}
+                            loading="lazy"
+                            className="h-16 w-16 rounded-2xl border border-slate-200 object-cover dark:border-slate-700"
+                        />
+                    ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-slate-300 text-xs text-slate-400 dark:border-slate-600 dark:text-slate-500">
+                            Tidak ada foto
+                        </div>
+                    )}
+                    <div className="flex-1">
+                        <p className="text-lg font-semibold text-slate-800 dark:text-white">
+                            {product.name}
+                        </p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {product.category?.name ?? "Kategori belum diatur"}
+                        </p>
+                    </div>
+                </div>
+
+                {product.description && (
+                    <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+                        {product.description}
+                    </p>
+                )}
+
+                <div className="mt-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        Cabang
+                    </p>
+                    {branches.length ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {branches.map((branch) => (
+                                <span
+                                    key={branch.id}
+                                    className="rounded-full border border-slate-200/80 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                                >
+                                    {branch.name}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            Belum terhubung dengan cabang mana pun.
+                        </p>
+                    )}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between rounded-xl border border-slate-200/80 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-100">
+                    <span>Harga</span>
+                    <span className="text-base text-primary dark:text-teal-200">
+                        {formatCurrency(product.price)}
+                    </span>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                    <Link
+                        href={`/products/${product.id}/edit`}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-primary/40 px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary hover:text-white dark:border-teal-400/40 dark:text-teal-200 dark:hover:bg-teal-400/10"
+                    >
+                        <Edit className="size-4" />
+                        Edit
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSelectedProduct(product);
+                            setIsConfirmOpen(true);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-600 hover:text-white dark:border-red-400/30 dark:text-red-300 dark:hover:bg-red-500/20"
+                    >
+                        <Trash2 className="size-4" />
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <RootLayout title="Data Produk">
             <ConfirmationAlert
@@ -154,6 +242,7 @@ export default function ProductIndex() {
             >
                 <DataTable
                     dataTable={dataTable}
+                    cardItem={renderProductCard}
                     isLoading={isLoading}
                     onChangePage={onChangePage}
                     onParamsChange={onParamsChange}
