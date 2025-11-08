@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Business;
-use App\Models\Branch;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -16,6 +14,10 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        $this->call([
+            RoleSeeder::class,
+        ]);
+
         $user = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
@@ -25,31 +27,10 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $business = Business::firstOrCreate(
-            [
-                'owner_id' => $user->id,
-                'name' => 'Sentra Kuliner',
-            ],
-            [
-                'description' => 'Usaha kuliner demo untuk kebutuhan pengujian.',
-            ]
-        );
-
-        Branch::firstOrCreate(
-            [
-                'business_id' => $business->id,
-                'owner_id' => $user->id,
-                'name' => 'Cabang Utama',
-            ],
-            [
-                'address' => 'Jl. Contoh No. 123, Jakarta',
-                'opening_time' => '08:00',
-                'closing_time' => '22:00',
-            ]
-        );
+        $user->assignRole("Businessman");
 
         $this->call([
-            RoleSeeder::class,
+            BusinessSeeder::class,
             CategorySeeder::class,
             ProductSeeder::class,
             BusinessmanUserSeeder::class,

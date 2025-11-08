@@ -1,10 +1,10 @@
-import { useForm } from "@inertiajs/react";
-import { CalendarDays, Percent, Save } from "lucide-react";
-import Button from "../../components/buttons/Button";
-import FormInput from "../../components/forms/FormInput";
-import FormSelect from "../../components/forms/FormSelect";
-import ContentCard from "../../components/layouts/ContentCard";
-import RootLayout from "../../components/layouts/RootLayout";
+import { useForm } from '@inertiajs/react';
+import { CalendarDays, Percent, Save } from 'lucide-react';
+import Button from '../../components/buttons/Button';
+import FormInput from '../../components/forms/FormInput';
+import FormSelect from '../../components/forms/FormSelect';
+import ContentCard from '../../components/layouts/ContentCard';
+import RootLayout from '../../components/layouts/RootLayout';
 
 export default function PromoCreate({
     products = { all: [], by_business: {}, by_branch: {} },
@@ -12,15 +12,15 @@ export default function PromoCreate({
     branches = [],
 }) {
     const { data, setData, post, processing, errors } = useForm({
-        product_id: "",
-        product_id: "",
-        scope_type: "",
-        scope_id: "",
-        start_date: "",
-        end_date: "",
-        percent_discount: "",
-        price_discount: "",
-        usage_limit: "",
+        product_id: '',
+        product_id: '',
+        scope_type: '',
+        scope_id: '',
+        start_date: '',
+        end_date: '',
+        percent_discount: '',
+        price_discount: '',
+        usage_limit: '',
     });
 
     const scopeType = data.scope_type;
@@ -32,8 +32,8 @@ export default function PromoCreate({
         setData((prev) => ({
             ...prev,
             scope_type: value,
-            scope_id: "",
-            product_id: "",
+            scope_id: '',
+            product_id: '',
         }));
     };
 
@@ -42,16 +42,16 @@ export default function PromoCreate({
         setData((prev) => ({
             ...prev,
             scope_id: value,
-            product_id: "",
+            product_id: '',
         }));
     };
 
     const scopedProducts = () => {
-        if (scopeType === "business" && data.scope_id) {
+        if (scopeType === 'business' && data.scope_id) {
             return businessProductOptions[data.scope_id] ?? [];
         }
 
-        if (scopeType === "branch" && data.scope_id) {
+        if (scopeType === 'branch' && data.scope_id) {
             return branchProductOptions[data.scope_id] ?? [];
         }
 
@@ -60,7 +60,7 @@ export default function PromoCreate({
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        post("/promos");
+        post('/promos');
     };
 
     return (
@@ -69,9 +69,9 @@ export default function PromoCreate({
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div
                         className={`grid gap-4 ${
-                            scopeType === "product"
-                                ? "md:grid-cols-2"
-                                : "md:grid-cols-3"
+                            scopeType === 'product'
+                                ? 'md:grid-cols-2'
+                                : 'md:grid-cols-3'
                         }`}
                     >
                         <FormSelect
@@ -80,28 +80,30 @@ export default function PromoCreate({
                             value={data.scope_type}
                             onChange={handleScopeTypeChange}
                             options={[
-                                { value: "", label: "Pilih jenis promo" },
-                                { value: "product", label: "Per Produk (Semua Cabang)" },
-                                { value: "business", label: "Per Bisnis" },
-                                { value: "branch", label: "Per Cabang" },
+                                {
+                                    value: 'product',
+                                    label: 'Per Produk (Semua Cabang)',
+                                },
+                                { value: 'business', label: 'Per Bisnis' },
+                                { value: 'branch', label: 'Per Cabang' },
                             ]}
                             placeholder="Pilih cakupan promo"
                             error={errors.scope_type}
                             required
                         />
 
-                        {scopeType !== "product" && (
+                        {scopeType !== 'product' && (
                             <FormSelect
                                 name="scope_id"
                                 label={
-                                    scopeType === "business"
-                                        ? "Pilih Bisnis"
-                                        : "Pilih Cabang"
+                                    scopeType === 'business'
+                                        ? 'Pilih Bisnis'
+                                        : 'Pilih Cabang'
                                 }
                                 value={data.scope_id}
                                 onChange={handleScopeChange}
                                 options={
-                                    scopeType === "business"
+                                    scopeType === 'business'
                                         ? businesses.map((business) => ({
                                               value: business.id,
                                               label: business.name,
@@ -112,9 +114,9 @@ export default function PromoCreate({
                                           }))
                                 }
                                 placeholder={
-                                    scopeType === "business"
-                                        ? "Pilih bisnis"
-                                        : "Pilih cabang"
+                                    scopeType === 'business'
+                                        ? 'Pilih bisnis'
+                                        : 'Pilih cabang'
                                 }
                                 error={errors.scope_id}
                                 required
@@ -126,7 +128,7 @@ export default function PromoCreate({
                             label="Produk"
                             value={data.product_id}
                             onChange={(event) =>
-                                setData("product_id", event.target.value)
+                                setData('product_id', event.target.value)
                             }
                             options={scopedProducts()}
                             placeholder="Pilih produk"
@@ -135,7 +137,8 @@ export default function PromoCreate({
                         />
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Pilih cakupan promo: semua cabang, bisnis tertentu, atau cabang tertentu untuk produk yang dipilih.
+                        Pilih cakupan promo: semua cabang, bisnis tertentu, atau
+                        cabang tertentu untuk produk yang dipilih.
                     </p>
 
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -145,7 +148,7 @@ export default function PromoCreate({
                             label="Tanggal Mulai"
                             value={data.start_date}
                             onChange={(event) =>
-                                setData("start_date", event.target.value)
+                                setData('start_date', event.target.value)
                             }
                             error={errors.start_date}
                             required
@@ -157,7 +160,7 @@ export default function PromoCreate({
                             label="Tanggal Selesai"
                             value={data.end_date}
                             onChange={(event) =>
-                                setData("end_date", event.target.value)
+                                setData('end_date', event.target.value)
                             }
                             error={errors.end_date}
                             required
@@ -173,7 +176,7 @@ export default function PromoCreate({
                             label="Diskon Persen"
                             value={data.percent_discount}
                             onChange={(event) =>
-                                setData("percent_discount", event.target.value)
+                                setData('percent_discount', event.target.value)
                             }
                             error={errors.percent_discount}
                             icon={<Percent className="size-4" />}
@@ -186,7 +189,7 @@ export default function PromoCreate({
                             label="Diskon Harga"
                             value={data.price_discount}
                             onChange={(event) =>
-                                setData("price_discount", event.target.value)
+                                setData('price_discount', event.target.value)
                             }
                             error={errors.price_discount}
                             placeholder="Contoh: 5000"
@@ -202,7 +205,7 @@ export default function PromoCreate({
                         label="Kuota Promo (opsional)"
                         value={data.usage_limit}
                         onChange={(event) =>
-                            setData("usage_limit", event.target.value)
+                            setData('usage_limit', event.target.value)
                         }
                         error={errors.usage_limit}
                         placeholder="Contoh: 100"

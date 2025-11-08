@@ -24,7 +24,7 @@ class ProductSeeder extends Seeder
 
         $faker = fake();
 
-        foreach (range(1, 100) as $index) {
+        foreach (range(1, 20) as $index) {
             $category = $categories->random();
 
             $product = Product::create([

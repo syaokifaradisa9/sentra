@@ -45,8 +45,8 @@ class CategorySeeder extends Seeder
 
         $faker = fake();
 
-        // Generate 20 categories with unique names
-        foreach (range(1, 20) as $index) {
+        // Generate 5 categories with unique names
+        foreach (range(1, 5) as $index) {
             $name = $faker->unique()->sentence(2);
             $icon = Arr::random($iconOptions);
 
