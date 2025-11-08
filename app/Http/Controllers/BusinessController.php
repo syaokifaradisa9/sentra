@@ -7,9 +7,9 @@ use App\DataTransferObjects\BusinessDTO;
 use App\Http\Requests\BusinessRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Business;
+use App\Models\User;
 use App\Services\BusinessService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -17,13 +17,10 @@ use Throwable;
 
 class BusinessController extends Controller
 {
-    private $loggedUser;
     public function __construct(
         private BusinessService $businessService,
         private BusinessDatatableService $businessDatatable
-    ) {
-        $this->loggedUser = Auth::user();
-    }
+    ) {}
 
     public function index(): InertiaResponse
     {
@@ -38,7 +35,9 @@ class BusinessController extends Controller
     public function store(BusinessRequest $request): RedirectResponse
     {
         try {
-            $this->businessService->store(BusinessDTO::fromAppRequest($request));
+            $this->businessService->store(
+                BusinessDTO::fromAppRequest($request, $this->currentUserId())
+            );
 
             return to_route('business.index')->with('success', 'Bisnis berhasil dibuat');
         } catch (ValidationException $exception) {
@@ -52,8 +51,6 @@ class BusinessController extends Controller
 
     public function show(Business $business): InertiaResponse
     {
-        $this->ensureBusinessOwner($business);
-
         return Inertia::render('business/Detail', [
             'business' => [
                 'id' => $business->id,
@@ -65,8 +62,6 @@ class BusinessController extends Controller
 
     public function edit(Business $business): InertiaResponse
     {
-        $this->ensureBusinessOwner($business);
-
         return Inertia::render('business/Edit', [
             'business' => [
                 'id' => $business->id,
@@ -79,11 +74,9 @@ class BusinessController extends Controller
     public function update(BusinessRequest $request, Business $business): RedirectResponse
     {
         try {
-            $this->ensureBusinessOwner($business);
-
             $updated = $this->businessService->update(
                 $business->id,
-                BusinessDTO::fromAppRequest($request)
+                BusinessDTO::fromAppRequest($request, $this->currentUserId())
             );
 
             if (! $updated) {
@@ -103,9 +96,7 @@ class BusinessController extends Controller
     public function destroy(Business $business): RedirectResponse
     {
         try {
-            $this->ensureBusinessOwner($business);
-
-            $deleted = $this->businessService->delete($business->id, $this->loggedUser->id);
+            $deleted = $this->businessService->delete($business->id, $this->currentUserId());
 
             if ($deleted) {
                 return to_route('business.index')->with('success', 'Bisnis berhasil dihapus');
@@ -121,12 +112,12 @@ class BusinessController extends Controller
 
     public function datatable(DatatableRequest $request)
     {
-        return $this->businessDatatable->getDatatable($request, $this->loggedUser);
+        return $this->businessDatatable->getDatatable($request, $this->currentUser());
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        $pdfContent = $this->businessDatatable->printPdf($request, $this->loggedUser);
+        $pdfContent = $this->businessDatatable->printPdf($request, $this->currentUser());
         $fileName = 'laporan-bisnis-' . now()->format('Ymd_His') . '.pdf';
 
         return response()->make($pdfContent, 200, [
@@ -137,13 +128,17 @@ class BusinessController extends Controller
 
     public function printExcel(DatatableRequest $request)
     {
-        return $this->businessDatatable->printExcel($request, $this->loggedUser);
+        return $this->businessDatatable->printExcel($request, $this->currentUser());
     }
 
-    private function ensureBusinessOwner(Business $business): void
+    private function currentUser(): User
     {
-        abort_if($business->owner_id !== $this->loggedUser->id, 403);
+        /** @var User */
+        return auth()->user();
+    }
+
+    private function currentUserId(): int
+    {
+        return (int) $this->currentUser()->id;
     }
 }
-
-

@@ -3,7 +3,6 @@
 namespace App\DataTransferObjects;
 
 use App\Http\Requests\BusinessRequest;
-use Illuminate\Support\Facades\Auth;
 
 class BusinessDTO
 {
@@ -13,10 +12,9 @@ class BusinessDTO
         public ?string $description = null,
     ) {}
 
-    public static function fromAppRequest(BusinessRequest $request): self
+    public static function fromAppRequest(BusinessRequest $request, int $userId): self
     {
         $validated = $request->validated();
-        $userId = $request->user()?->id ?? Auth::id();
 
         return new self(
             userId: (int) $userId,
@@ -34,4 +32,3 @@ class BusinessDTO
         ];
     }
 }
-
