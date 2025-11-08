@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Business;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -15,17 +16,27 @@ class EnsureBusinessOwner
      */
     public function handle(Request $request, Closure $next, string $parameter = 'business')
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = $request->user();
-        $business = $request->route($parameter);
+        $businessParameter = $request->route($parameter);
 
-        if (! $user instanceof \App\Models\User || ! $business instanceof Business) {
+        if (! $user instanceof User) {
             abort(403);
+        }
+
+        $business = $businessParameter instanceof Business
+            ? $businessParameter
+            : Business::find($businessParameter);
+
+        if (! $business) {
+            abort(404);
         }
 
         abort_unless((int) $business->owner_id === (int) $user->id, 403);
 
+        // Ensure downstream uses the model instance.
+        $request->route()->setParameter($parameter, $business);
+
         return $next($request);
     }
 }
-
