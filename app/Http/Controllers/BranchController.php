@@ -7,10 +7,10 @@ use App\DataTransferObjects\BranchDTO;
 use App\Http\Requests\BranchRequest;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Models\Branch;
+use App\Models\User;
 use App\Services\BranchService;
 use App\Services\BusinessService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -18,14 +18,11 @@ use Throwable;
 
 class BranchController extends Controller
 {
-    private $loggedUser;
     public function __construct(
         private BranchService $branchService,
         private BranchDatatableService $branchDatatable,
         private BusinessService $businessService
-    ) {
-        $this->loggedUser = Auth::user();
-    }
+    ) {}
 
     public function index(): InertiaResponse
     {
@@ -35,7 +32,7 @@ class BranchController extends Controller
     public function create(): InertiaResponse
     {
         return Inertia::render('branch/Create', [
-            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id)
+            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->currentUserId())
         ]);
     }
 
@@ -65,7 +62,7 @@ class BranchController extends Controller
     {
         return Inertia::render('branch/Edit', [
             'branch' => $branch,
-            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->loggedUser->id)
+            'businesses' => $this->businessService->getOptionsDataByOwnerId($this->currentUserId())
         ]);
     }
 
@@ -107,12 +104,12 @@ class BranchController extends Controller
 
     public function datatable(DatatableRequest $request)
     {
-        return $this->branchDatatable->getDatatable($request, $this->loggedUser);
+        return $this->branchDatatable->getDatatable($request, $this->currentUser());
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        $pdfContent =  $this->branchDatatable->printPdf($request, $this->loggedUser);
+        $pdfContent =  $this->branchDatatable->printPdf($request, $this->currentUser());
         $fileName = 'laporan-bisnis-' . now()->format('Ymd_His') . '.pdf';
 
         return response()->make($pdfContent, 200, [
@@ -123,6 +120,17 @@ class BranchController extends Controller
 
     public function printExcel(DatatableRequest $request)
     {
-        return $this->branchDatatable->printExcel($request, $this->loggedUser);
+        return $this->branchDatatable->printExcel($request, $this->currentUser());
+    }
+
+    private function currentUser(): User
+    {
+        /** @var User */
+        return auth()->user();
+    }
+
+    private function currentUserId(): int
+    {
+        return (int) $this->currentUser()->id;
     }
 }
