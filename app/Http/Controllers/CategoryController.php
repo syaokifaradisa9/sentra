@@ -11,24 +11,19 @@ use App\Services\BranchService;
 use App\Services\BusinessService;
 use App\Services\CategoryService;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\Models\User;
 
 class CategoryController extends Controller
 {
-    private $loggedUser;
     public function __construct(
         private CategoryService $categoryService,
         private CategoryDatatableService $categoryDatatable,
         private BranchService $branchService,
         private BusinessService $businessService
-    ) {
-        $this->loggedUser = Auth::user();
-    }
+    ) {}
 
     public function index(): InertiaResponse
     {
@@ -38,7 +33,7 @@ class CategoryController extends Controller
     public function create(): InertiaResponse
     {
         return Inertia::render('category/Create', [
-            'branches' => $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id),
+            'branches' => $this->branchService->getOptionsDataByOwnerId($this->currentUserId()),
         ]);
     }
 
@@ -46,8 +41,7 @@ class CategoryController extends Controller
     {
         try {
             $this->categoryService->store(
-                CategoryDTO::fromAppRequest($request),
-                $this->loggedUser->id
+                CategoryDTO::fromAppRequest($request)
             );
 
             return to_route('categories.index')->with('success', 'Kategori berhasil dibuat');
@@ -68,7 +62,7 @@ class CategoryController extends Controller
 
         return Inertia::render('category/Edit', [
             'category' => $category,
-            'branches' => $this->branchService->getOptionsDataByOwnerId($this->loggedUser->id),
+            'branches' => $this->branchService->getOptionsDataByOwnerId($this->currentUserId()),
         ]);
     }
 
@@ -77,8 +71,7 @@ class CategoryController extends Controller
         try {
             $updatedCategory = $this->categoryService->update(
                 $category->id,
-                CategoryDTO::fromAppRequest($request),
-                $this->loggedUser->id
+                CategoryDTO::fromAppRequest($request)
             );
 
             if (! $updatedCategory) {
@@ -112,12 +105,12 @@ class CategoryController extends Controller
 
     public function datatable(DatatableRequest $request)
     {
-        return $this->categoryDatatable->getDatatable($request, $this->loggedUser);
+        return $this->categoryDatatable->getDatatable($request, $this->currentUser());
     }
 
     public function printPdf(DatatableRequest $request)
     {
-        $pdfContent =  $this->categoryDatatable->printPdf($request, $this->loggedUser);
+        $pdfContent =  $this->categoryDatatable->printPdf($request, $this->currentUser());
         $fileName = 'Laporan Kategori Per ' . date("d F Y") . '.pdf';
 
         return response()->make($pdfContent, 200, [
@@ -128,8 +121,18 @@ class CategoryController extends Controller
 
     public function printExcel(DatatableRequest $request)
     {
-        return $this->categoryDatatable->printExcel($request, $this->loggedUser);
+        return $this->categoryDatatable->printExcel($request, $this->currentUser());
+    }
+
+    private function currentUser(): User
+    {
+        /** @var User */
+        return auth()->user();
+    }
+
+    private function currentUserId(): int
+    {
+        return (int) $this->currentUser()->id;
     }
 
 }
-
