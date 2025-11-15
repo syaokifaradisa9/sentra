@@ -129,7 +129,7 @@ export default function ProductSection({
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Cari menu atau kode..."
-                        className="w-full rounded-xl border border-slate-200 bg-transparent px-4 py-3 pl-10 text-sm text-slate-600 transition outline-none focus:border-primary focus:text-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:text-slate-200"
+                        className="w-full rounded-xl border border-slate-400 bg-transparent px-4 py-3.5 pl-10 text-sm text-slate-600 transition outline-none focus:border-primary focus:text-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:text-slate-200"
                     />
                 </div>
                 <div className="flex items-center justify-end gap-2">
@@ -149,9 +149,9 @@ export default function ProductSection({
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Cari menu atau kode..."
-                            className="w-full rounded-xl border border-slate-200 bg-transparent px-4 py-2 pl-10 text-sm text-slate-600 transition outline-none focus:border-primary focus:text-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:text-slate-200"
-                        />
-                    </div>
+                        className="w-full rounded-xl border border-slate-400 bg-transparent px-4 py-2.5 pl-10 text-sm text-slate-600 transition outline-none focus:border-primary focus:text-primary focus:ring-2 focus:ring-primary/30 dark:border-slate-700 dark:text-slate-200"
+                    />
+                </div>
                     <div className="flex items-center gap-2">
                         <ThemeToggleButton />
                         <ViewModeToggle />

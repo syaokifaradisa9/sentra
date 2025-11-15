@@ -148,7 +148,8 @@
 }
 
 .scrollbar-elegant::-webkit-scrollbar {
-    width: 6px;
+    width: 2px;
+    height: 2px;
 }
 
 .scrollbar-elegant::-webkit-scrollbar-track {

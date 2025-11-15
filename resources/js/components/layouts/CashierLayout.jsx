@@ -35,7 +35,7 @@ export default function CashierLayout({ title, children }) {
                 <title>{title ?? "Kasir"}</title>
             </Head>
             <Toaster position="bottom-right" />
-            <div className="flex h-screen flex-col overflow-hidden bg-[#F7F7FB] text-slate-900 antialiased transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100">
+            <div className="flex h-screen flex-col overflow-hidden bg-[#E3E7F1] text-slate-900 antialiased transition-colors duration-300 dark:bg-slate-900 dark:text-slate-100">
                 {children}
             </div>
         </>
