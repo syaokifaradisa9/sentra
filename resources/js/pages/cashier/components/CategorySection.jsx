@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Coffee, Package2 } from 'lucide-react';
+import { Briefcase, ChevronLeft, ChevronRight, Coffee, Package2 } from 'lucide-react';
 import { CATEGORY_ICON_MAP } from '../../../constants/categoryIcons';
 
 export default function CategorySection({
@@ -6,6 +6,8 @@ export default function CategorySection({
     selectedCategory,
     setSelectedCategory,
     handleBack,
+    userName,
+    userPosition,
     productListOffset = 0,
     isCollapsed = false,
     onToggleCollapse,
@@ -13,8 +15,9 @@ export default function CategorySection({
     const containerClassName = `scrollbar-elegant flex-1 space-y-1 overflow-y-auto ${
         isCollapsed ? 'pr-0' : 'pr-1'
     }`;
-    const adjustedMarginTop =
-        productListOffset > 0 ? Math.max(productListOffset - 16, 0) : 0;
+    const adjustedMarginTop = 0;
+    const displayName = userName ?? 'Pengguna';
+    const displayPosition = userPosition ?? 'Kasir';
 
     return (
         <div
@@ -28,6 +31,31 @@ export default function CategorySection({
                     : { overflow: 'visible' }
             }
         >
+            <div className="pl-0.5 pr-1 pb-4">
+                <div className="flex items-center gap-2">
+                    {handleBack && (
+                        <button
+                            type="button"
+                            onClick={handleBack}
+                            className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center text-slate-500 transition hover:text-primary dark:text-slate-300 dark:hover:text-teal-300"
+                            aria-label="Kembali"
+                        >
+                            <ChevronLeft className="h-5 w-5" />
+                        </button>
+                    )}
+                    {!isCollapsed && (
+                        <div className="flex flex-col leading-tight text-left text-[13px] text-slate-500 dark:text-slate-400">
+                            <span className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">
+                                {displayName}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-xs">
+                                <Briefcase className="h-3.5 w-3.5" />
+                                {displayPosition}
+                            </span>
+                        </div>
+                    )}
+                </div>
+            </div>
             <div
                 className={`flex items-center gap-2 px-1 pb-3 ${
                     isCollapsed ? 'flex-col-reverse' : 'justify-between'

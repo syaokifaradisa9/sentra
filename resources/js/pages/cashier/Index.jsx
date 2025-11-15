@@ -1,5 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
 import {
+    ChevronLeft,
     Download,
     LayoutGrid,
     List,
@@ -15,15 +16,6 @@ import ProductSection from './components/ProductSection';
 import SummarySection from './components/SummarySection';
 import { formatCurrency } from './utils/cashierUtils';
 
-function Avatar({ name }) {
-    const initial = name?.charAt(0)?.toUpperCase() ?? '?';
-    return (
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/90 to-teal-400 text-lg font-semibold text-white shadow">
-            {initial}
-        </div>
-    );
-}
-
 const SAVED_ORDER_STORAGE_KEY = 'cashier_saved_orders';
 
 export default function CashierIndex({
@@ -33,6 +25,8 @@ export default function CashierIndex({
 }) {
     const { auth } = usePage().props;
     const user = auth?.user;
+    const displayName = user?.name ?? 'Pengguna';
+    const displayPosition = user?.position ?? user?.role ?? 'Kasir';
 
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [search, setSearch] = useState('');
@@ -471,6 +465,8 @@ export default function CashierIndex({
                                 selectedCategory={selectedCategory}
                                 setSelectedCategory={setSelectedCategory}
                                 handleBack={handleBack}
+                                userName={displayName}
+                                userPosition={displayPosition}
                                 productListOffset={productListOffset}
                                 isCollapsed={isCategoryCollapsed}
                                 onToggleCollapse={setIsCategoryCollapsed}
