@@ -23,6 +23,6 @@ class RolesCheckMiddleware
             }
         }
 
-        return back()->with("error", "Akses ditolak, Anda tidak memiliki izin untuk mengakses halaman ini.");
+        abort(Response::HTTP_FORBIDDEN, 'Akses ditolak, Anda tidak memiliki izin.');
     }
 }

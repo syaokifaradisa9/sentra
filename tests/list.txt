@@ -1,0 +1,37 @@
+
+Cabang  
+- BranchFlowsRegressionTest.php – Menguji alur regresi fitur cabang (daftar, tambah, edit, hapus, cetak).  
+- ManageBranchTest.php – Memastikan CRUD cabang oleh Businessman berjalan baik.  
+- BranchServiceIntegrationTest.php – Menjamin service cabang terhubung benar dengan repository dan DB.  
+
+Bisnis  
+- BusinessFlowsRegressionTest.php – Regrasi alur halaman bisnis.  
+- ManageBusinessTest.php – Tes CRUD bisnis milik Businessman.  
+- BusinessServiceIntegrationTest.php – Integrasi service bisnis dengan repository.  
+
+Kategori  
+- CategoryFlowsRegressionTest.php – Regrasi daftar/cetak kategori.  
+- ManageCategoryTest.php – Pastikan CRUD kategori berfungsi.  
+- CategoryServiceIntegrationTest.php – Integrasi service kategori.  
+
+Produk  
+- ProductFlowsRegressionTest.php – Regrasi UI produk.  
+- ManageProductTest.php – CRUD produk.  
+- ProductServiceIntegrationTest.php – Integrasi service produk.  
+
+Promo  
+- tests/Feature/Promo/* – Alur pembuatan, pengeditan, penghapusan, hingga cetak promo.  
+
+Middleware & Role  
+- EnsureBranchOwnerTest.php (Feature) - Hanya pemilik cabang yang lolos middleware.  
+- EnsureBusinessOwnerTest.php (Feature dan Unit) - Validasi middleware pemilik bisnis.  
+- RoleFeatureAccessTest.php - Menguji hak akses tiap role dengan assert status:  
+  - Businessman → semua modul (dashboard, kasir, bisnis, cabang, kategori, produk, promo) mengembalikan 200.  
+  - BusinessOwner → semua modul kecuali business.index (403).  
+  - SmallBusinessOwner & Manager → hanya dashboard/kasir/kategori/produk/promo yang 200; business & cabang wajib 403.  
+  - Kasir → hanya dashboard/kasir/kategori/produk/promo yang 200; business & cabang 403.  
+
+DTO, Repository, Service  
+- BranchDTOTest.php, BusinessDTOTest.php, CategoryDTOTest.php, ProductDTOTest.php – Validasi konstruksi DTO.  
+- Repository tests (Branch, Business, Category, CategoryBranch, Product, ProductBranch) – Perilaku Eloquent repository.  
+- Service tests (BranchService, BusinessService, CategoryService, ProductService) – Logika layanan aplikasi.  
