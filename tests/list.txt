@@ -1,37 +1,37 @@
 
-Cabang  
-- BranchFlowsRegressionTest.php – Menguji alur regresi fitur cabang (daftar, tambah, edit, hapus, cetak).  
-- ManageBranchTest.php – Memastikan CRUD cabang oleh Businessman berjalan baik.  
-- BranchServiceIntegrationTest.php – Menjamin service cabang terhubung benar dengan repository dan DB.  
+Branches  
+- BranchFlowsRegressionTest.php – Regression of branch flows (list, create, edit, delete, export).  
+- ManageBranchTest.php – Ensures branch CRUD works for Businessman users.  
+- BranchServiceIntegrationTest.php – Verifies the branch service communicates correctly with repositories/DB.  
 
-Bisnis  
-- BusinessFlowsRegressionTest.php – Regrasi alur halaman bisnis.  
-- ManageBusinessTest.php – Tes CRUD bisnis milik Businessman.  
-- BusinessServiceIntegrationTest.php – Integrasi service bisnis dengan repository.  
+Business  
+- BusinessFlowsRegressionTest.php – Regression for business pages.  
+- ManageBusinessTest.php – Business CRUD scenarios driven by Businessman role.  
+- BusinessServiceIntegrationTest.php – Integration coverage for the business service layer.  
 
-Kategori  
-- CategoryFlowsRegressionTest.php – Regrasi daftar/cetak kategori.  
-- ManageCategoryTest.php – Pastikan CRUD kategori berfungsi.  
-- CategoryServiceIntegrationTest.php – Integrasi service kategori.  
+Categories  
+- CategoryFlowsRegressionTest.php – Regression for listing/printing categories.  
+- ManageCategoryTest.php – Validates full CRUD operations on categories.  
+- CategoryServiceIntegrationTest.php – Integration between category service and repositories.  
 
-Produk  
-- ProductFlowsRegressionTest.php – Regrasi UI produk.  
-- ManageProductTest.php – CRUD produk.  
-- ProductServiceIntegrationTest.php – Integrasi service produk.  
+Products  
+- ProductFlowsRegressionTest.php – Regression for product UI flows.  
+- ManageProductTest.php – Product CRUD assertions.  
+- ProductServiceIntegrationTest.php – Integration coverage for product service.  
 
-Promo  
-- tests/Feature/Promo/* – Alur pembuatan, pengeditan, penghapusan, hingga cetak promo.  
+Promos  
+- tests/Feature/Promo/* – Create, edit, delete, and export promo scenarios.  
 
-Middleware & Role  
-- EnsureBranchOwnerTest.php (Feature) - Hanya pemilik cabang yang lolos middleware.  
-- EnsureBusinessOwnerTest.php (Feature dan Unit) - Validasi middleware pemilik bisnis.  
-- RoleFeatureAccessTest.php - Menguji hak akses tiap role dengan assert status:  
-  - Businessman → semua modul (dashboard, kasir, bisnis, cabang, kategori, produk, promo) mengembalikan 200.  
-  - BusinessOwner → semua modul kecuali business.index (403).  
-  - SmallBusinessOwner & Manager → hanya dashboard/kasir/kategori/produk/promo yang 200; business & cabang wajib 403.  
-  - Kasir → hanya dashboard/kasir/kategori/produk/promo yang 200; business & cabang 403.  
+Middleware & Roles  
+- EnsureBranchOwnerTest.php (Feature) – Only branch owners pass this middleware.  
+- EnsureBusinessOwnerTest.php (Feature & Unit) – Middleware validation for business ownership.  
+- RoleFeatureAccessTest.php – Role matrix assertions by HTTP status:  
+  - Businessman → all modules (dashboard, cashier, business, branches, categories, products, promos) return 200.  
+  - BusinessOwner → all modules except business.index (expected 403).  
+  - SmallBusinessOwner & Manager → only dashboard/cashier/categories/products/promos return 200; business & branches must be 403.  
+  - Cashier → only dashboard/cashier/categories/products/promos return 200; business & branches return 403.  
 
 DTO, Repository, Service  
-- BranchDTOTest.php, BusinessDTOTest.php, CategoryDTOTest.php, ProductDTOTest.php – Validasi konstruksi DTO.  
-- Repository tests (Branch, Business, Category, CategoryBranch, Product, ProductBranch) – Perilaku Eloquent repository.  
-- Service tests (BranchService, BusinessService, CategoryService, ProductService) – Logika layanan aplikasi.  
+- BranchDTOTest.php, BusinessDTOTest.php, CategoryDTOTest.php, ProductDTOTest.php – DTO construction/serialization checks.  
+- Repository tests (Branch, Business, Category, CategoryBranch, Product, ProductBranch) – Expected behavior of each Eloquent repository.  
+- Service tests (BranchService, BusinessService, CategoryService, ProductService) – Verifies domain logic inside service layers.  
