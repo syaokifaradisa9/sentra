@@ -23,10 +23,10 @@ export default function CashierIndex({
     products = [],
     total_products: totalProducts = 0,
 }) {
-    const { auth } = usePage().props;
-    const user = auth?.user;
-    const displayName = user?.name ?? 'Pengguna';
-    const displayPosition = user?.position ?? user?.role ?? 'Kasir';
+    const { loggeduser } = usePage().props;
+    const displayName = loggeduser?.name ?? 'Pengguna';
+    const displayPosition =
+        loggeduser?.position ?? loggeduser?.role ?? 'Kasir';
 
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [search, setSearch] = useState('');
