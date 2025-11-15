@@ -1,19 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeft,
-    ClipboardList,
-    Coffee,
-    LayoutGrid,
-    List,
-    Minus,
-    MoreHorizontal,
-    Package2,
-    Plus,
-    Trash2,
-    X,
-} from 'lucide-react';
+import { LayoutGrid, List, MoreHorizontal, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import FormSelect from '../../components/forms/FormSelect';
 import CashierLayout from '../../components/layouts/CashierLayout';
 import CategorySection from './components/CategorySection';
 import ProductSection from './components/ProductSection';
@@ -57,6 +44,8 @@ export default function CashierIndex({
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
     const [saveDraftName, setSaveDraftName] = useState('');
+    const [productListOffset, setProductListOffset] = useState(0);
+    const [isCategoryCollapsed, setIsCategoryCollapsed] = useState(false);
     const [theme, setTheme] = useState(() => {
         if (typeof window === 'undefined') {
             return 'dark';
@@ -460,13 +449,22 @@ export default function CashierIndex({
         <>
             <CashierLayout title="Kasir">
                 <div className="mx-auto flex h-full w-full max-w-none flex-1 flex-col overflow-hidden px-2 pt-2 pb-0 sm:px-2 lg:px-3">
-                    <div className="grid flex-1 gap-3 overflow-hidden pb-20 lg:min-h-0 lg:grid-cols-[16rem_minmax(0,1fr)_24rem] lg:pb-0">
-                        <aside className="hidden h-full min-h-0 lg:flex lg:pt-4 lg:pr-2">
+                    <div
+                        className={`grid flex-1 gap-3 overflow-visible pb-20 lg:min-h-0 ${
+                            isCategoryCollapsed
+                                ? 'lg:grid-cols-[3rem_minmax(0,1fr)_24rem]'
+                                : 'lg:grid-cols-[16rem_minmax(0,1fr)_24rem]'
+                        } lg:pb-0`}
+                    >
+                        <aside className="hidden h-full min-h-0 lg:flex lg:pt-4">
                             <CategorySection
                                 categoryOptions={categoryOptions}
                                 selectedCategory={selectedCategory}
                                 setSelectedCategory={setSelectedCategory}
                                 handleBack={handleBack}
+                                productListOffset={productListOffset}
+                                isCollapsed={isCategoryCollapsed}
+                                onToggleCollapse={setIsCategoryCollapsed}
                             />
                         </aside>
 
@@ -481,6 +479,9 @@ export default function CashierIndex({
                             handleAddProduct={handleAddProduct}
                             orderQuantities={orderQuantities}
                             categoryOptions={categoryOptions}
+                            theme={theme}
+                            toggleTheme={toggleTheme}
+                            onProductListOffsetChange={setProductListOffset}
                         />
 
                         <aside className="hidden h-full min-h-0 lg:block lg:pt-4">
