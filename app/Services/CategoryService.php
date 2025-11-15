@@ -43,7 +43,8 @@ class CategoryService
     {
         return DB::transaction(function () use ($id, $dto) {
             $this->categoryRepository->update($id, [
-                'name' => $dto->name
+                'name' => $dto->name,
+                'icon' => $dto->icon,
             ]);
             
             $this->syncCategoryBranches($id, $dto->branchIds);

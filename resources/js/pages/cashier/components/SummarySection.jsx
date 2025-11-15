@@ -17,7 +17,7 @@ export default function SummarySection({
     feedbackMessage,
 }) {
     return (
-        <div className="flex max-h-[calc(100vh-6rem)] flex-col rounded-3xl border border-slate-200 bg-white p-4 shadow-sm ring-1 ring-white/40 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700/60">
+        <div className="flex max-h-[calc(100vh-6rem)] flex-col rounded-3xl bg-white p-4 shadow-sm dark:bg-slate-800">
             <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Daftar Pesanan

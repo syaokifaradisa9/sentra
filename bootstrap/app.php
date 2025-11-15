@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureBusinessOwner;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RolesCheckMiddleware;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'roles' => RolesCheckMiddleware::class,
+            'business.owner' => EnsureBusinessOwner::class,
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

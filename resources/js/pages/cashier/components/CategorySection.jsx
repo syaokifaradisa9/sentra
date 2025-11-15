@@ -1,4 +1,4 @@
-import { ArrowLeft, Package2, Coffee } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Coffee, Package2 } from 'lucide-react';
 import { CATEGORY_ICON_MAP } from '../../../constants/categoryIcons';
 
 export default function CategorySection({
@@ -6,36 +6,71 @@ export default function CategorySection({
     selectedCategory,
     setSelectedCategory,
     handleBack,
+    productListOffset = 0,
+    isCollapsed = false,
+    onToggleCollapse,
 }) {
+    const containerClassName = `scrollbar-elegant flex-1 space-y-1 overflow-y-auto ${
+        isCollapsed ? 'pr-0' : 'pr-1'
+    }`;
+    const adjustedMarginTop =
+        productListOffset > 0 ? Math.max(productListOffset - 16, 0) : 0;
+
     return (
-        <div className="mb-5 flex min-h-0 w-full flex-1 flex-col rounded-2xl bg-white/90 px-4 pt-4 shadow-sm ring-1 ring-slate-200/70 backdrop-blur-sm dark:bg-slate-900/70 dark:ring-white/15">
-            <div className="mb-4 flex items-center gap-3">
+        <div
+            className={containerClassName}
+            style={
+                adjustedMarginTop > 0
+                    ? {
+                          marginTop: adjustedMarginTop,
+                          overflow: 'visible',
+                      }
+                    : { overflow: 'visible' }
+            }
+        >
+            <div
+                className={`flex items-center gap-2 px-1 pb-3 ${
+                    isCollapsed ? 'flex-col-reverse' : 'justify-between'
+                }`}
+            >
+                {!isCollapsed && (
+                    <p className="text-xs font-semibold tracking-wide text-slate-500 dark:text-slate-400">
+                        Filter Kategori
+                    </p>
+                )}
                 <button
                     type="button"
-                    onClick={handleBack}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 text-slate-600 ring-1 ring-slate-200 transition hover:text-primary hover:ring-primary/50 dark:bg-slate-900/60 dark:text-slate-300 dark:ring-slate-700"
-                    aria-label="Kembali"
+                    onClick={() => onToggleCollapse?.(!isCollapsed)}
+                    aria-label={
+                        isCollapsed
+                            ? 'Tampilkan filter kategori'
+                            : 'Sembunyikan filter kategori'
+                    }
+                    className={`inline-flex h-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:border-primary hover:text-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-teal-400 dark:hover:text-teal-300 ${
+                        isCollapsed ? 'w-full' : 'w-7'
+                    }`}
+                    aria-expanded={!isCollapsed}
                 >
-                    <ArrowLeft className="h-5 w-5" />
+                    {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4" />
+                    ) : (
+                        <ChevronLeft className="h-4 w-4" />
+                    )}
                 </button>
-                <div>
-                    <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-100">
-                        Kategori
-                    </h2>
-                </div>
             </div>
-            <div className="scrollbar-elegant flex-1 space-y-1 overflow-y-auto pr-1">
-                {categoryOptions.map((category) => {
-                    const isActive = String(selectedCategory) === String(category.id);
+            {!isCollapsed &&
+                categoryOptions.map((category) => {
+                    const isActive =
+                        String(selectedCategory) === String(category.id);
                     return (
                         <button
                             key={category.id}
                             type="button"
                             onClick={() => setSelectedCategory(category.id)}
-                            className={`flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm font-medium transition ${
+                            className={`ml-1 flex w-full items-center justify-between rounded-xl px-4 py-2 text-left text-[13px] font-medium transition ${
                                 isActive
-                                    ? 'border-primary/50 bg-primary/10 text-primary shadow-sm ring-1 ring-primary/40 dark:border-teal-400/40 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/40'
-                                    : 'border-transparent text-slate-500 hover:border-primary/30 hover:bg-primary/5 hover:text-primary dark:text-slate-300 dark:hover:border-teal-400/30 dark:hover:bg-slate-800/60'
+                                    ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/40 dark:bg-teal-400/10 dark:text-teal-300 dark:ring-teal-400/40'
+                                    : 'text-slate-500 hover:bg-primary/5 hover:text-primary dark:text-slate-300 dark:hover:bg-slate-800/60'
                             }`}
                         >
                             <span className="flex items-center gap-2">
@@ -45,9 +80,10 @@ export default function CategorySection({
                                     }
 
                                     const iconName = category.icon ?? null;
-                                    const IconComponent = iconName && CATEGORY_ICON_MAP[iconName]
-                                        ? CATEGORY_ICON_MAP[iconName]
-                                        : Package2;
+                                    const IconComponent =
+                                        iconName && CATEGORY_ICON_MAP[iconName]
+                                            ? CATEGORY_ICON_MAP[iconName]
+                                            : Package2;
 
                                     return <IconComponent className="h-4 w-4" />;
                                 })()}
@@ -59,7 +95,59 @@ export default function CategorySection({
                         </button>
                     );
                 })}
-            </div>
+            {isCollapsed && (
+                <div className="mt-1 flex flex-col gap-3 px-0.5">
+                    {categoryOptions.map((category) => {
+                        const isActive =
+                            String(selectedCategory) === String(category.id);
+                        return (
+                            <div
+                                key={category.id}
+                                className="group relative flex w-full justify-center"
+                            >
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setSelectedCategory(category.id)
+                                    }
+                                    className={`flex h-10 w-full items-center justify-center rounded-xl text-slate-500 transition ${
+                                        isActive
+                                            ? 'text-primary dark:text-teal-300'
+                                            : 'hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
+                                    }`}
+                                    aria-label={category.name}
+                                >
+                                    {(() => {
+                                        if (category.id === 'all') {
+                                            return (
+                                                <Coffee className="h-5 w-5" />
+                                            );
+                                        }
+
+                                        const iconName =
+                                            category.icon ?? null;
+                                        const IconComponent =
+                                            iconName &&
+                                            CATEGORY_ICON_MAP[iconName]
+                                                ? CATEGORY_ICON_MAP[iconName]
+                                                : Package2;
+
+                                        return (
+                                            <IconComponent className="h-5 w-5" />
+                                        );
+                                    })()}
+                                    <span className="sr-only">
+                                        {category.name}
+                                    </span>
+                                </button>
+                                <span className="pointer-events-none absolute left-full top-1/2 z-[999] ml-3 -translate-y-1/2 translate-x-2 whitespace-nowrap rounded-md border border-slate-700/60 bg-slate-900/95 px-2.5 py-1 text-[11px] font-medium text-white opacity-0 shadow-xl transition group-hover:translate-x-0 group-hover:opacity-100 dark:border-slate-600/60 dark:bg-slate-800/95">
+                                    {category.name}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

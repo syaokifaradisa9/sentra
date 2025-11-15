@@ -11,7 +11,9 @@ Route::prefix('business')
         Route::get('/', 'index')->name('index');
         Route::get('/create', 'create')->name('create');
         Route::post('/store', 'store')->name('store');
-        Route::prefix('{business}')->group(function () {
+        Route::prefix('{business}')
+            ->middleware('business.owner')
+            ->group(function () {
             Route::get('/edit', 'edit')->name('edit');
             Route::put('/update', 'update')->name('update');
             Route::delete('/delete', 'destroy')->name('delete');
@@ -24,4 +26,3 @@ Route::prefix('business')
                 Route::get('/excel', 'printExcel')->name('excel');
             });
     });
-

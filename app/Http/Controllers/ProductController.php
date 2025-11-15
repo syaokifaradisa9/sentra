@@ -10,23 +10,19 @@ use App\Models\Product;
 use App\Services\ProductService;
 use App\Services\CategoryService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\Models\User;
 use Throwable;
 
 class ProductController extends Controller
 {
-    private $loggedUser;
-
     public function __construct(
         private ProductService $productService,
         private ProductDatatableService $productDatatable,
         private CategoryService $categoryService,
-    ) {
-        $this->loggedUser = Auth::user();
-    }
+    ) {}
 
     public function index(): InertiaResponse
     {
@@ -35,14 +31,14 @@ class ProductController extends Controller
 
     public function datatable(DatatableRequest $request)
     {
-        return $this->productDatatable->getDatatable($request, $this->loggedUser);
+        return $this->productDatatable->getDatatable($request, $this->currentUser());
     }
 
     public function create(): InertiaResponse
     {
         return Inertia::render('product/Create', [
             'categories' => $this->categoriesPayload(),
-            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($this->loggedUser->id),
+            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($this->currentUserId()),
         ]);
     }
 
@@ -51,7 +47,7 @@ class ProductController extends Controller
         try {
             $this->productService->store(
                 ProductDTO::fromAppRequest($request),
-                $this->loggedUser->id
+                $this->currentUserId()
             );
 
             return to_route('products.index')->with('success', 'Produk berhasil dibuat');
@@ -79,7 +75,7 @@ class ProductController extends Controller
                 'photo_url' => $product->photo ? asset('storage/' . $product->photo) : null,
             ],
             'categories' => $this->categoriesPayload(),
-            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($this->loggedUser->id),
+            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($this->currentUserId()),
         ]);
     }
 
@@ -89,7 +85,7 @@ class ProductController extends Controller
             $updated = $this->productService->update(
                 $product->id,
                 ProductDTO::fromAppRequest($request),
-                $this->loggedUser->id
+                $this->currentUserId()
             );
 
             if (! $updated) {
@@ -109,7 +105,7 @@ class ProductController extends Controller
     public function destroy(int $product): RedirectResponse
     {
         try {
-            $deleted = $this->productService->delete($product, $this->loggedUser->id);
+            $deleted = $this->productService->delete($product, $this->currentUserId());
 
             if ($deleted) {
                 return to_route('products.index')->with('success', 'Produk berhasil dihapus');
@@ -125,7 +121,7 @@ class ProductController extends Controller
 
     public function printPdf(DatatableRequest $request)
     {
-        $pdfContent = $this->productDatatable->printPdf($request, $this->loggedUser);
+        $pdfContent = $this->productDatatable->printPdf($request, $this->currentUser());
         $fileName = 'laporan-produk-' . now()->format('Ymd_His') . '.pdf';
 
         return response()->make($pdfContent, 200, [
@@ -136,13 +132,13 @@ class ProductController extends Controller
 
     public function printExcel(DatatableRequest $request)
     {
-        return $this->productDatatable->printExcel($request, $this->loggedUser);
+        return $this->productDatatable->printExcel($request, $this->currentUser());
     }
 
     private function categoriesPayload()
     {
         return $this->categoryService
-            ->getByOwnerId($this->loggedUser->id)
+            ->getByOwnerId($this->currentUserId())
             ->map(static fn ($category) => [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -155,5 +151,16 @@ class ProductController extends Controller
                     ->values(),
             ])
             ->values();
+    }
+
+    private function currentUser(): User
+    {
+        /** @var User */
+        return auth()->user();
+    }
+
+    private function currentUserId(): int
+    {
+        return (int) $this->currentUser()->id;
     }
 }
