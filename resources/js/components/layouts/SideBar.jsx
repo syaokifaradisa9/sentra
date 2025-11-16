@@ -152,7 +152,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                         </span>
                     </div>
                     <div className="flex min-h-0 flex-1 flex-col">
-                        <div className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-slate-700 scrollbar-track-transparent flex-1 overflow-y-auto">
+                        <div className="scrollbar-elegant flex-1 overflow-y-auto">
                             <div className="px-3 py-5">
                                 <nav className="space-y-6">
                                     {NAV_SECTIONS.filter(shouldShowSection).map(
