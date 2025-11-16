@@ -42,4 +42,9 @@ class User extends Authenticatable
         return $this->belongsToMany(Branch::class, 'branch_employee')
             ->withTimestamps();
     }
+
+    public function branchAssignments()
+    {
+        return $this->hasOne(BranchEmployee::class, 'user_id');
+    }
 }

@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Repositories\UserBranch;
+namespace App\Repositories\BranchEmployee;
 
-use App\Models\UserBranch;
+use App\Models\BranchEmployee;
 use Illuminate\Support\Collection;
 
-class EloquentUserBranchRepository implements UserBranchRepository
+class EloquentBranchEmployeeRepository implements BranchEmployeeRepository
 {
-    protected UserBranch $model;
+    protected BranchEmployee $model;
 
-    public function __construct(UserBranch $userBranch)
+    public function __construct(BranchEmployee $branchEmployee)
     {
-        $this->model = $userBranch;
+        $this->model = $branchEmployee;
     }
 
     public function getByUserId(int $userId): Collection

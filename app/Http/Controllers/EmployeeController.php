@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\DataTransferObjects\EmployeeDTO;
-use App\Http\Requests\EmployeeRequest;
-use App\Http\Requests\Common\DatatableRequest;
+use Exception;
 use App\Models\User;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
 use App\Services\BusinessService;
 use App\Services\EmployeeService;
-use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\EmployeeRequest;
+use App\DataTransferObjects\EmployeeDTO;
 use Illuminate\Support\Facades\Response;
-use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use App\Datatables\EmployeeDatatableService;
+use App\Http\Requests\Common\DatatableRequest;
+use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
 {
@@ -25,10 +26,18 @@ class EmployeeController extends Controller
     public function __construct(
         private EmployeeService $employeeService,
         private BusinessService $businessService,
-        private \App\Datatables\EmployeeDatatableService $employeeDatatable,
+        private EmployeeDatatableService $employeeDatatable,
     ) {
         $this->middleware(function ($request, $next) {
             $this->loggedUser = $request->user();
+
+             if (! $this->loggedUser?->hasAnyRole([
+                 'Businessman',
+                 'BusinessOwner',
+                 'SmallBusinessOwner',
+             ])) {
+                 abort(403);
+             }
 
             return $next($request);
         });

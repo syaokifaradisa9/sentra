@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Repositories\UserBranch;
+namespace App\Repositories\BranchEmployee;
 
-use App\Models\UserBranch;
+use App\Models\BranchEmployee;
 use Illuminate\Support\Collection;
 
-interface UserBranchRepository
+interface BranchEmployeeRepository
 {
     public function getByUserId(int $userId): Collection;
     public function deleteByUserId(int $userId): bool;

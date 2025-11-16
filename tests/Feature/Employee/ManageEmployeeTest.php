@@ -8,6 +8,11 @@ use function Pest\Laravel\actingAs;
 uses(RefreshDatabase::class);
 uses(InteractsWithBranch::class);
 
+dataset('nonEmployeeRoles', [
+    ['Manager'],
+    ['Cashier'],
+]);
+
 function employeePayload(array $overrides = []): array
 {
     return array_merge([
@@ -38,6 +43,27 @@ it('allows a Businessman to create an employee for a single branch', function ()
     $employeeId = User::where('email', $payload['email'])->value('id');
 
     expect($employeeId)->not->toBeNull();
+
+    $this->assertDatabaseHas('branch_employee', [
+        'user_id' => $employeeId,
+        'branch_id' => $branch->id,
+    ]);
+});
+
+it('allows a BusinessOwner to create an employee for their branch', function () {
+    $businessOwner = $this->createBusinessOwnerUser();
+    $branch = $this->createBranch(['owner_id' => $businessOwner->id]);
+
+    $payload = employeePayload([
+        'branch_id' => $branch->id,
+    ]);
+
+    actingAs($businessOwner)
+        ->post(route('employees.store'), $payload)
+        ->assertRedirect(route('employees.index'))
+        ->assertSessionHas('success');
+
+    $employeeId = User::where('email', $payload['email'])->value('id');
 
     $this->assertDatabaseHas('branch_employee', [
         'user_id' => $employeeId,
@@ -81,3 +107,29 @@ it('forces a SmallBusinessOwner to assign employees to their single branch', fun
         'branch_id' => $ownedBranch->id,
     ]);
 });
+
+it('denies access to employee feature for unauthorized roles', function (string $role) {
+    $user = createUserWithRoleForEmployees($role);
+
+    actingAs($user)
+        ->get(route('employees.index'))
+        ->assertForbidden();
+
+    actingAs($user)
+        ->post(route('employees.store'), employeePayload())
+        ->assertForbidden();
+})->with('nonEmployeeRoles');
+
+function createUserWithRoleForEmployees(string $role): User
+{
+    $roleModel = \Spatie\Permission\Models\Role::findOrCreate($role, 'web');
+
+    /** @var User $user */
+    $user = User::factory()->create([
+        'position' => $role,
+    ]);
+
+    $user->assignRole($roleModel);
+
+    return $user;
+}

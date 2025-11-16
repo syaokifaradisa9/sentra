@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EmployeeController;
+use App\Http\Middleware\EnsureEmployeeOwner;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('employees')
@@ -17,10 +18,11 @@ Route::prefix('employees')
             });
         Route::get('/create', 'create')->name('create');
         Route::post('/', 'store')->name('store');
-        Route::prefix('{employee}')->group(function () {
-            Route::get('/edit', 'edit')->name('edit');
-            Route::put('/', 'update')->name('update');
-            Route::delete('/', 'destroy')->name('destroy');
-        });
+        Route::prefix('{employee}')
+            ->middleware(EnsureEmployeeOwner::class)
+            ->group(function () {
+                Route::get('/edit', 'edit')->name('edit');
+                Route::put('/', 'update')->name('update');
+                Route::delete('/', 'destroy')->name('destroy');
+            });
     });
-

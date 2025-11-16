@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Repositories\Branch\BranchRepository;
 use App\Repositories\Business\BusinessRepository;
 use App\Repositories\User\UserRepository;
-use App\Repositories\UserBranch\UserBranchRepository;
+use App\Repositories\BranchEmployee\BranchEmployeeRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -19,7 +19,7 @@ class EmployeeService
 {
     public function __construct(
         private UserRepository $userRepository,
-        private UserBranchRepository $userBranchRepository,
+        private BranchEmployeeRepository $userBranchRepository,
         private BranchRepository $branchRepository,
         private BusinessRepository $businessRepository,
     ) {}

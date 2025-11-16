@@ -2,19 +2,20 @@
 
 namespace App\Datatables;
 
+use App\Http\Requests\Common\DatatableRequest;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use App\Http\Requests\Common\DatatableRequest;
 
-class EmployeeDatatableService {
-    private function getStartedQuery(DatatableRequest $request, $loggedUser){
+class EmployeeDatatableService
+{
+    private function getStartedQuery(DatatableRequest $request, $loggedUser)
+    {
         $query = User::query()->where('id', '!=', $loggedUser->id);
 
         if ($loggedUser->hasRole('Businessman')) {
-            // Businessman can see all employees
         } elseif ($loggedUser->hasRole('BusinessOwner')) {
             $query = $query->whereHas('roles', function ($builder) {
                 $builder->whereIn('name', ['Manager', 'Cashier', 'Admin']);
@@ -42,8 +43,8 @@ class EmployeeDatatableService {
             $query->orderBy("created_at", "desc");
         }
 
-        if($request->search){
-            $query->where(function($query) use($request){
+        if ($request->search) {
+            $query->where(function ($query) use ($request) {
                 $query->where("name", "like", "%$request->search%")
                     ->orWhere("email", "like", "%$request->search%")
                     ->orWhere("phone", "like", "%$request->search%")
@@ -51,20 +52,25 @@ class EmployeeDatatableService {
             });
         }
 
-        $query->when($request->name, function($query, $search){
+        $query->when($request->name, function ($query, $search) {
             $query->where("name", "like", "%{$search}%");
-        })->when($request->email, function($query, $search){
+        })->when($request->email, function ($query, $search) {
             $query->where("email", "like", "%{$search}%");
-        })->when($request->phone, function($query, $search){
+        })->when($request->phone, function ($query, $search) {
             $query->where("phone", "like", "%{$search}%");
-        })->when($request->position, function($query, $search){
+        })->when($request->position, function ($query, $search) {
             $query->where("position", "like", "%{$search}%");
         });
 
-        return $query->with(['branches', 'roles']);
+        return $query
+            ->whereHas('branches', function ($builder) use ($loggedUser) {
+                $builder->where('branches.owner_id', $loggedUser->id);
+            })
+            ->with(['branches', 'roles']);
     }
 
-    public function getDatatable(DatatableRequest $request, $loggedUser, $additionalData = []){
+    public function getDatatable(DatatableRequest $request, $loggedUser, $additionalData = [])
+    {
         $limit = $request->limit ?? 20;
 
         $records = $this->getStartedQuery($request, $loggedUser);
@@ -73,14 +79,16 @@ class EmployeeDatatableService {
         return $records;
     }
 
-    public function printPdf(DatatableRequest $request, $loggedUser, $additionalData = []){
+    public function printPdf(DatatableRequest $request, $loggedUser, $additionalData = [])
+    {
         $records = $this->getStartedQuery($request, $loggedUser)->get();
         return Pdf::loadView("reports.employees", [
             'records' => $records
         ])->setPaper("A4", "landscape")->output();
     }
 
-    public function printExcel(DatatableRequest $request, $loggedUser, $additionalData = []){
+    public function printExcel(DatatableRequest $request, $loggedUser, $additionalData = [])
+    {
         $records = $this->getStartedQuery($request, $loggedUser)->get();
 
         $spreadsheet = new Spreadsheet();
