@@ -52,18 +52,6 @@ class SmallBusinessOwnerUserSeeder extends Seeder
                 'opening_time' => '06:00',
                 'closing_time' => '20:00',
             ],
-            [
-                'name' => 'Warung Harian - Ciputat',
-                'address' => 'Jl. RE Martadinata No. 40, Ciputat',
-                'opening_time' => '06:30',
-                'closing_time' => '21:00',
-            ],
-            [
-                'name' => 'Warung Harian - Bogor',
-                'address' => 'Jl. Pajajaran No. 22, Bogor',
-                'opening_time' => '07:00',
-                'closing_time' => '21:30',
-            ],
         ];
 
         foreach ($branches as $branchData) {

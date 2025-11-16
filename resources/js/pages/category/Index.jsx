@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
-import { Link, router } from "@inertiajs/react";
-import { Edit, Plus, Printer, Trash2 } from "lucide-react";
-import RootLayout from "../../components/layouts/RootLayout";
-import ContentCard from "../../components/layouts/ContentCard";
-import Button from "../../components/buttons/Button";
-import DropdownButton from "../../components/buttons/DropdownButton";
-import ConfirmationAlert from "../../components/alerts/ConfirmationAlert";
-import DataTable from "../../components/tables/Datatable";
-import FormSearch from "../../components/forms/FormSearch";
+import { Link, router } from '@inertiajs/react';
+import { Edit, Plus, Printer, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import ConfirmationAlert from '../../components/alerts/ConfirmationAlert';
+import Button from '../../components/buttons/Button';
+import DropdownButton from '../../components/buttons/DropdownButton';
+import FormSearch from '../../components/forms/FormSearch';
+import ContentCard from '../../components/layouts/ContentCard';
+import RootLayout from '../../components/layouts/RootLayout';
+import DataTable from '../../components/tables/Datatable';
 import {
     CATEGORY_ICON_LABEL_MAP,
     CATEGORY_ICON_MAP,
-} from "../../constants/categoryIcons";
+} from '../../constants/categoryIcons';
 
 const initialDatatableState = {
     data: [],
@@ -27,13 +27,13 @@ export default function CategoryIndex() {
     const [dataTable, setDataTable] = useState(initialDatatableState);
     const [isLoading, setIsLoading] = useState(false);
     const [params, setParams] = useState({
-        search: "",
+        search: '',
         limit: 20,
         page: 1,
-        sort_by: "created_at",
-        sort_direction: "desc",
-        name: "",
-        branch: "",
+        sort_by: 'created_at',
+        sort_direction: 'desc',
+        name: '',
+        branch: '',
     });
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -41,7 +41,7 @@ export default function CategoryIndex() {
     const onPrint = (type) => {
         const query = new URLSearchParams(params).toString();
         const url = `/categories/print/${type}?${query}`;
-        window.open(url, "_blank");
+        window.open(url, '_blank');
     };
 
     const loadDatatable = async () => {
@@ -52,7 +52,7 @@ export default function CategoryIndex() {
             const data = await response.json();
             setDataTable(data);
         } catch (error) {
-            console.error("Failed to load category datatable", error);
+            console.error('Failed to load category datatable', error);
             setDataTable({ ...initialDatatableState });
         } finally {
             setIsLoading(false);
@@ -67,7 +67,7 @@ export default function CategoryIndex() {
         const { name, value } = event.target;
         setParams((prev) => ({
             ...prev,
-            page: name === "limit" ? 1 : prev.page,
+            page: name === 'limit' ? 1 : prev.page,
             [name]: value,
         }));
     };
@@ -76,13 +76,13 @@ export default function CategoryIndex() {
         event.preventDefault();
         try {
             const url = new URL(event.target.href);
-            const page = url.searchParams.get("page") ?? "1";
+            const page = url.searchParams.get('page') ?? '1';
             setParams((prev) => ({
                 ...prev,
                 page: Number(page),
             }));
         } catch (error) {
-            console.error("Failed to change page", error);
+            console.error('Failed to change page', error);
         }
     };
 
@@ -90,7 +90,7 @@ export default function CategoryIndex() {
         setParams((prev) => {
             const isSameColumn = prev.sort_by === columnName;
             const sortDirection =
-                isSameColumn && prev.sort_direction === "asc" ? "desc" : "asc";
+                isSameColumn && prev.sort_direction === 'asc' ? 'desc' : 'asc';
 
             return {
                 ...prev,
@@ -107,8 +107,8 @@ export default function CategoryIndex() {
 
     const branchLabel = (branches) =>
         branches && branches.length > 0
-            ? branches.map((branch) => branch.name).join(", ")
-            : "-";
+            ? branches.map((branch) => branch.name).join(', ')
+            : '-';
 
     const renderCategoryCard = (category) => {
         const iconName = category.icon ?? null;
@@ -128,7 +128,7 @@ export default function CategoryIndex() {
                         </span>
                     )}
                     <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                             Kategori
                         </p>
                         <p className="text-lg font-semibold text-slate-800 dark:text-white">
@@ -136,14 +136,14 @@ export default function CategoryIndex() {
                         </p>
                         {iconName && (
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                {CATEGORY_ICON_LABEL_MAP[iconName] ?? "Ikon"}
+                                {CATEGORY_ICON_LABEL_MAP[iconName] ?? 'Ikon'}
                             </p>
                         )}
                     </div>
                 </div>
 
                 <div className="mt-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                         Cabang
                     </p>
                     {branches.length ? (
@@ -191,7 +191,7 @@ export default function CategoryIndex() {
                 isOpen={isConfirmOpen}
                 setOpenModalStatus={setIsConfirmOpen}
                 title="Konfirmasi Hapus"
-                message={`Hapus kategori ${selectedCategory?.name ?? ""}? Tindakan ini tidak dapat dibatalkan.`}
+                message={`Hapus kategori ${selectedCategory?.name ?? ''}? Tindakan ini tidak dapat dibatalkan.`}
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
                 type="danger"
@@ -227,12 +227,12 @@ export default function CategoryIndex() {
                             }
                             items={[
                                 {
-                                    label: "PDF",
-                                    onClick: () => onPrint("pdf"),
+                                    label: 'PDF',
+                                    onClick: () => onPrint('pdf'),
                                 },
                                 {
-                                    label: "Excel",
-                                    onClick: () => onPrint("excel"),
+                                    label: 'Excel',
+                                    onClick: () => onPrint('excel'),
                                 },
                             ]}
                         />
@@ -240,9 +240,9 @@ export default function CategoryIndex() {
                     columns={[
                         {
                             name: null,
-                            header: "Ikon",
-                            headerClassName: "w-24",
-                            bodyClassname: "w-24",
+                            header: 'Ikon',
+                            headerClassName: 'w-24',
+                            bodyClassname: 'w-24',
                             render: (item) => {
                                 const iconName = item.icon ?? null;
                                 const IconComponent =
@@ -252,7 +252,7 @@ export default function CategoryIndex() {
                                         className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-primary dark:border-slate-700 dark:bg-slate-800 dark:text-teal-200"
                                         title={
                                             CATEGORY_ICON_LABEL_MAP[iconName] ??
-                                            "Ikon kategori"
+                                            'Ikon kategori'
                                         }
                                     >
                                         <IconComponent className="h-5 w-5" />
@@ -265,8 +265,8 @@ export default function CategoryIndex() {
                             },
                         },
                         {
-                            name: "name",
-                            header: "Nama Kategori",
+                            name: 'name',
+                            header: 'Nama Kategori',
                             render: (item) => item.name,
                             footer: (
                                 <FormSearch
@@ -277,7 +277,8 @@ export default function CategoryIndex() {
                             ),
                         },
                         {
-                            header: "Cabang",
+                            roles: ['Businessman', 'BusinessOwner'],
+                            header: 'Cabang',
                             name: null,
                             render: (item) => (
                                 <span className="text-slate-600 dark:text-slate-300">
@@ -293,7 +294,7 @@ export default function CategoryIndex() {
                             ),
                         },
                         {
-                            header: "Aksi",
+                            header: 'Aksi',
                             render: (item) => (
                                 <div className="flex items-center justify-end gap-3">
                                     <Link

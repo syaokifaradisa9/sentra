@@ -45,12 +45,38 @@ class BranchService
     public function getOptionsDataByOwnerId(int $userId): array
     {
         $branches = $this->branchRepository->getByOwnerId($userId);
-        
+
         return $branches->map(function ($branch) {
             return [
                 'id' => $branch->id,
                 'name' => $branch->name,
             ];
         })->toArray();
+    }
+
+    public function getOptionsDataByUserId(int $userId): array
+    {
+        $branches = $this->branchRepository->getByUserId($userId);
+
+        return $branches->map(function ($branch) {
+            return [
+                'id' => $branch->id,
+                'name' => $branch->name,
+            ];
+        })->toArray();
+    }
+
+    public function getBranchIdsForUser(int $userId): array
+    {
+        $branches = $this->branchRepository->getByUserId($userId);
+
+        if ($branches->isEmpty()) {
+            $branches = $this->branchRepository->getByOwnerId($userId);
+        }
+
+        return $branches->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->values()
+            ->all();
     }
 }

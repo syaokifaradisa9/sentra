@@ -32,17 +32,32 @@ class CategoryController extends Controller
 
     public function create(): InertiaResponse
     {
+        $currentUser = $this->currentUser();
+        $currentRole = $currentUser->getRoleNames()->first();
+
         return Inertia::render('category/Create', [
-            'branches' => $this->branchService->getOptionsDataByOwnerId($this->currentUserId()),
+            'branches' => $this->resolveBranchOptions($currentUser),
+            'currentRole' => $currentRole,
+            'defaultBranchIds' => $this->resolveSmallBusinessOwnerBranchIds($currentUser),
         ]);
     }
 
     public function store(CategoryRequest $request): RedirectResponse
     {
-        try {
-            $this->categoryService->store(
-                CategoryDTO::fromAppRequest($request)
+        $currentUser = $this->currentUser();
+        $categoryDTO = CategoryDTO::fromAppRequest($request);
+        $forcedBranchIds = $this->resolveSmallBusinessOwnerBranchIds($currentUser);
+
+        if (! empty($forcedBranchIds)) {
+            $categoryDTO = new CategoryDTO(
+                name: $categoryDTO->name,
+                branchIds: $forcedBranchIds,
+                icon: $categoryDTO->icon,
             );
+        }
+
+        try {
+            $this->categoryService->store($categoryDTO);
 
             return to_route('categories.index')->with('success', 'Kategori berhasil dibuat');
         } catch (Exception $exception) {
@@ -60,18 +75,35 @@ class CategoryController extends Controller
             abort(404);
         }
 
+        $currentUser = $this->currentUser();
+        $currentRole = $currentUser->getRoleNames()->first();
+
         return Inertia::render('category/Edit', [
             'category' => $category,
-            'branches' => $this->branchService->getOptionsDataByOwnerId($this->currentUserId()),
+            'branches' => $this->resolveBranchOptions($currentUser),
+            'currentRole' => $currentRole,
+            'defaultBranchIds' => $this->resolveSmallBusinessOwnerBranchIds($currentUser),
         ]);
     }
 
     public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
+        $currentUser = $this->currentUser();
+        $categoryDTO = CategoryDTO::fromAppRequest($request);
+        $forcedBranchIds = $this->resolveSmallBusinessOwnerBranchIds($currentUser);
+
+        if (! empty($forcedBranchIds)) {
+            $categoryDTO = new CategoryDTO(
+                name: $categoryDTO->name,
+                branchIds: $forcedBranchIds,
+                icon: $categoryDTO->icon,
+            );
+        }
+
         try {
             $updatedCategory = $this->categoryService->update(
                 $category->id,
-                CategoryDTO::fromAppRequest($request)
+                $categoryDTO
             );
 
             if (! $updatedCategory) {
@@ -133,6 +165,28 @@ class CategoryController extends Controller
     private function currentUserId(): int
     {
         return (int) $this->currentUser()->id;
+    }
+
+    private function resolveBranchOptions(User $user): array
+    {
+        $branches = $this->branchService->getOptionsDataByOwnerId($user->id);
+
+        if ($user->hasRole('SmallBusinessOwner') && empty($branches)) {
+            return $this->branchService->getOptionsDataByUserId($user->id);
+        }
+
+        return $branches;
+    }
+
+    private function resolveSmallBusinessOwnerBranchIds(User $user): array
+    {
+        if (! $user->hasRole('SmallBusinessOwner')) {
+            return [];
+        }
+
+        $branchIds = $this->branchService->getBranchIdsForUser($user->id);
+
+        return array_slice($branchIds, 0, 1);
     }
 
 }

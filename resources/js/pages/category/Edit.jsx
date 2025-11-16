@@ -7,11 +7,22 @@ import FormCheckbox from "../../components/forms/FormCheckBox";
 import Button from "../../components/buttons/Button";
 import { CATEGORY_ICONS } from "../../constants/categoryIcons";
 
-export default function CategoryEdit({ category, branches = [] }) {
+export default function CategoryEdit({
+    category,
+    branches = [],
+    currentRole = "",
+    defaultBranchIds = [],
+}) {
     const initialIcon = category?.icon ?? null;
+    const isSmallBusinessOwner = currentRole === "SmallBusinessOwner";
+    const initialBranchIds =
+        isSmallBusinessOwner && defaultBranchIds.length > 0
+            ? [...defaultBranchIds]
+            : category?.branch_ids ?? [];
+
     const { data, setData, put, processing, errors } = useForm({
         name: category?.name ?? "",
-        branch_ids: category?.branch_ids ?? [],
+        branch_ids: initialBranchIds,
         icon: initialIcon,
     });
 
@@ -22,6 +33,10 @@ export default function CategoryEdit({ category, branches = [] }) {
         errors.branch_ids ?? (branchErrorKey ? errors[branchErrorKey] : null);
 
     const toggleBranch = (branchId) => {
+        if (isSmallBusinessOwner) {
+            return;
+        }
+
         const selected = data.branch_ids.includes(branchId)
             ? data.branch_ids.filter((id) => id !== branchId)
             : [...data.branch_ids, branchId];
@@ -87,35 +102,52 @@ export default function CategoryEdit({ category, branches = [] }) {
                         )}
                     </div>
 
-                    <div className="space-y-3">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                            Cabang
-                        </p>
-
-                        {branches.length === 0 ? (
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Tidak ada cabang yang tersedia untuk pengguna ini.
+                    {!isSmallBusinessOwner && (
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                Cabang
                             </p>
-                        ) : (
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {branches.map((branch) => (
-                                    <FormCheckbox
-                                        key={branch.id}
-                                        label={branch.name}
-                                        name="branch_ids[]"
-                                        checked={data.branch_ids.includes(branch.id)}
-                                        onChange={() => toggleBranch(branch.id)}
-                                    />
-                                ))}
-                            </div>
-                        )}
 
-                        {branchErrorMessage && (
-                            <p className="text-sm text-red-600">
-                                {branchErrorMessage}
+                            {branches.length === 0 ? (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Tidak ada cabang yang tersedia untuk pengguna ini.
+                                </p>
+                            ) : (
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {branches.map((branch) => (
+                                        <FormCheckbox
+                                            key={branch.id}
+                                            label={branch.name}
+                                            name="branch_ids[]"
+                                            checked={data.branch_ids.includes(branch.id)}
+                                            onChange={() => toggleBranch(branch.id)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
+                            {branchErrorMessage && (
+                                <p className="text-sm text-red-600">
+                                    {branchErrorMessage}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {isSmallBusinessOwner && (
+                        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            <p className="font-medium text-slate-700 dark:text-slate-100">
+                                Cabang Otomatis
                             </p>
-                        )}
-                    </div>
+                            <p>
+                                {branches
+                                    .filter((branch) => data.branch_ids.includes(branch.id))
+                                    .map((branch) => branch.name)
+                                    .join(", ") ||
+                                    "Kategori ini otomatis mengikuti cabang Anda."}
+                            </p>
+                        </div>
+                    )}
 
                     <Button
                         icon={<Save className="size-4" />}

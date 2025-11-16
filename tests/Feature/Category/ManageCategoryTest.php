@@ -1,6 +1,10 @@
 <?php
 
+use App\Models\Category;
+use App\Models\User;
+use App\Services\BranchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\Concerns\InteractsWithCategory;
 use function Pest\Laravel\actingAs;
 
@@ -65,3 +69,68 @@ it('deletes a category', function () {
     $this->assertDatabaseMissing('categories', ['id' => $category->id]);
 });
 
+it('forces a SmallBusinessOwner to store categories for a single branch', function () {
+    $user = createSmallBusinessOwnerUser();
+    $branchOne = $this->createBranch();
+    $branchTwo = $this->createBranch();
+
+    $branchOne->users()->attach($user->id);
+    $branchTwo->users()->attach($user->id);
+
+    $payload = $this->categoryPayload($branchTwo, [
+        'branch_ids' => [$branchOne->id, $branchTwo->id],
+    ]);
+
+    actingAs($user)
+        ->post(route('categories.store'), $payload)
+        ->assertRedirect(route('categories.index'))
+        ->assertSessionHas('success');
+
+    $category = Category::with('branches')->firstOrFail();
+    $expectedBranchId = app(BranchService::class)->getBranchIdsForUser($user->id)[0];
+
+    expect($category->branches)->toHaveCount(1)
+        ->and($category->branches->first()->id)->toBe($expectedBranchId);
+});
+
+it('forces a SmallBusinessOwner to keep a single branch when updating categories', function () {
+    $user = createSmallBusinessOwnerUser();
+    $branchOne = $this->createBranch();
+    $branchTwo = $this->createBranch();
+
+    $branchOne->users()->attach($user->id);
+    $branchTwo->users()->attach($user->id);
+
+    $category = $this->createCategory(branchIds: [$branchOne->id]);
+
+    $payload = [
+        'name' => 'Updated Category for Small Owner',
+        'icon' => 'fa-leaf',
+        'branch_ids' => [$branchOne->id, $branchTwo->id],
+    ];
+
+    actingAs($user)
+        ->put(route('categories.update', $category), $payload)
+        ->assertRedirect(route('categories.index'))
+        ->assertSessionHas('success');
+
+    $category->refresh()->load('branches');
+    $expectedBranchId = app(BranchService::class)->getBranchIdsForUser($user->id)[0];
+
+    expect($category->branches)->toHaveCount(1)
+        ->and($category->branches->first()->id)->toBe($expectedBranchId);
+});
+
+function createSmallBusinessOwnerUser(array $attributes = []): User
+{
+    $role = Role::findOrCreate('SmallBusinessOwner', 'web');
+
+    /** @var User $user */
+    $user = User::factory()->create(array_merge([
+        'position' => 'SmallBusinessOwner',
+    ], $attributes));
+
+    $user->assignRole($role);
+
+    return $user;
+}
