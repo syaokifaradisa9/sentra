@@ -15,6 +15,11 @@ export default function SummarySection({
     onLoadOrder,
     canLoadSaved,
     feedbackMessage,
+    branchOptions = [],
+    canSelectBranch = false,
+    selectedBranchId = '',
+    onBranchChange = () => {},
+    activeBranch = null,
 }) {
     return (
         <div className="flex h-[calc(100vh-4rem)] min-h-0 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-600 dark:bg-slate-800/70">
@@ -162,6 +167,27 @@ export default function SummarySection({
                     <ShoppingBag className="h-4 w-4" />
                     <span>Buat Pesanan</span>
                 </button>
+
+                {canSelectBranch && branchOptions.length > 0 ? (
+                    <div className="mt-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                            Cabang
+                        </p>
+                        <div className="mt-1">
+                            <select
+                                value={selectedBranchId ?? ''}
+                                onChange={onBranchChange}
+                                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-teal-400 dark:focus:ring-teal-300/30"
+                            >
+                                {branchOptions.map((branch) => (
+                                    <option key={branch.id} value={branch.id}>
+                                        {branch.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                ) : null}
 
                 <div className="mt-3 flex flex-col gap-1">
                     <div className="grid grid-cols-2 gap-2">

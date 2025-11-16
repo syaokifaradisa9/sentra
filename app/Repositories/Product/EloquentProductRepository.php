@@ -56,9 +56,12 @@ class EloquentProductRepository implements ProductRepository
 
     public function getByBranchId(int $branchId): Collection
     {
-        return $this->model->whereHas('category.branches', function ($query) use ($branchId) {
-            $query->where('branches.id', $branchId);
-        })->get();
+        return $this->model
+            ->with(['category', 'branches'])
+            ->whereHas('branches', function ($query) use ($branchId) {
+                $query->where('branches.id', $branchId);
+            })
+            ->get();
     }
 
     public function getByBusinessId(int $businessId): Collection

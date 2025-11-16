@@ -22,11 +22,17 @@ export default function CashierIndex({
     categories = [],
     products = [],
     total_products: totalProducts = 0,
+    branchOptions: branchOptionsProp = [],
+    selectedBranchId = null,
+    canSelectBranch = false,
+    activeBranch = null,
+    currentRole = '',
 }) {
     const { loggeduser } = usePage().props;
     const displayName = loggeduser?.name ?? 'Pengguna';
     const displayPosition =
         loggeduser?.position ?? loggeduser?.role ?? 'Kasir';
+    const branchOptions = branchOptionsProp ?? [];
 
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [search, setSearch] = useState('');
@@ -62,6 +68,41 @@ export default function CashierIndex({
             ? 'dark'
             : 'light';
     });
+    const [branchFilter, setBranchFilter] = useState(
+        selectedBranchId
+            ? String(selectedBranchId)
+            : branchOptions[0]?.id
+              ? String(branchOptions[0].id)
+              : '',
+    );
+
+    useEffect(() => {
+        setBranchFilter(selectedBranchId ? String(selectedBranchId) : '');
+    }, [selectedBranchId]);
+
+    useEffect(() => {
+        if (!canSelectBranch) {
+            return;
+        }
+
+        setOrders([]);
+        setHasSavedOrder(false);
+        setOrderFeedback(null);
+    }, [selectedBranchId, canSelectBranch]);
+
+    const handleBranchChange = (event) => {
+        const { value } = event.target;
+        setBranchFilter(value);
+        router.get(
+            '/cashier',
+            { branch_id: value },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
 
     const categoryProductCounts = useMemo(() => {
         return products.reduce((accumulator, product) => {
@@ -505,6 +546,11 @@ export default function CashierIndex({
                                     onLoadOrder={handleLoadOrder}
                                     canLoadSaved={hasSavedOrder}
                                     feedbackMessage={orderFeedback}
+                                    branchOptions={branchOptions}
+                                    canSelectBranch={canSelectBranch}
+                                    selectedBranchId={branchFilter}
+                                    onBranchChange={handleBranchChange}
+                                    activeBranch={activeBranch}
                                 />
                             </div>
                         </aside>

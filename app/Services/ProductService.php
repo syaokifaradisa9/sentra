@@ -135,6 +135,11 @@ class ProductService
         return $this->productRepository->getForUser($userId, []);
     }
 
+    public function getByBranch(int $branchId): Collection
+    {
+        return $this->productRepository->getByBranchId($branchId);
+    }
+
     private function syncProductBranches(int $productId, array $branchIds): void
     {
         $this->productBranchRepository->deleteByProductId($productId);

@@ -81,6 +81,11 @@ class CategoryService
         return $this->categoryRepository->getByOwnerId($ownerId);
     }
 
+    public function getByBranchId(int $branchId): Collection
+    {
+        return $this->categoryRepository->getByBranchId($branchId);
+    }
+
     public function getOptionsByOwnerId(int $userId): array
     {
         $categories = $this->categoryRepository->getByOwnerId($userId);
