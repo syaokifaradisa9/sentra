@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link, router } from "@inertiajs/react";
-import { Edit, Plus, Printer, Trash2 } from "lucide-react";
-import RootLayout from "../../components/layouts/RootLayout";
-import ContentCard from "../../components/layouts/ContentCard";
-import Button from "../../components/buttons/Button";
-import DropdownButton from "../../components/buttons/DropdownButton";
-import ConfirmationAlert from "../../components/alerts/ConfirmationAlert";
-import DataTable from "../../components/tables/Datatable";
-import FormSearch from "../../components/forms/FormSearch";
+import { Link, router } from '@inertiajs/react';
+import { Edit, Plus, Printer, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import ConfirmationAlert from '../../components/alerts/ConfirmationAlert';
+import Button from '../../components/buttons/Button';
+import DropdownButton from '../../components/buttons/DropdownButton';
+import FormSearch from '../../components/forms/FormSearch';
+import ContentCard from '../../components/layouts/ContentCard';
+import RootLayout from '../../components/layouts/RootLayout';
+import DataTable from '../../components/tables/Datatable';
 
 const initialDatatableState = {
     data: [],
@@ -23,15 +23,15 @@ export default function ProductIndex() {
     const [dataTable, setDataTable] = useState(initialDatatableState);
     const [isLoading, setIsLoading] = useState(false);
     const [params, setParams] = useState({
-        search: "",
+        search: '',
         limit: 20,
         page: 1,
-        sort_by: "created_at",
-        sort_direction: "desc",
-        name: "",
-        description: "",
-        category: "",
-        branch: "",
+        sort_by: 'created_at',
+        sort_direction: 'desc',
+        name: '',
+        description: '',
+        category: '',
+        branch: '',
     });
 
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function ProductIndex() {
             const data = await response.json();
             setDataTable(data);
         } catch (error) {
-            console.error("Failed to load product datatable", error);
+            console.error('Failed to load product datatable', error);
             setDataTable({ ...initialDatatableState });
         } finally {
             setIsLoading(false);
@@ -60,7 +60,7 @@ export default function ProductIndex() {
         const { name, value } = event.target;
         setParams((prev) => ({
             ...prev,
-            page: name === "limit" ? 1 : prev.page,
+            page: name === 'limit' ? 1 : prev.page,
             [name]: value,
         }));
     };
@@ -69,13 +69,13 @@ export default function ProductIndex() {
         event.preventDefault();
         try {
             const url = new URL(event.target.href);
-            const page = url.searchParams.get("page") ?? "1";
+            const page = url.searchParams.get('page') ?? '1';
             setParams((prev) => ({
                 ...prev,
                 page: Number(page),
             }));
         } catch (error) {
-            console.error("Failed to change page", error);
+            console.error('Failed to change page', error);
         }
     };
 
@@ -83,7 +83,7 @@ export default function ProductIndex() {
         setParams((prev) => {
             const isSameColumn = prev.sort_by === columnName;
             const sortDirection =
-                isSameColumn && prev.sort_direction === "asc" ? "desc" : "asc";
+                isSameColumn && prev.sort_direction === 'asc' ? 'desc' : 'asc';
 
             return {
                 ...prev,
@@ -95,7 +95,7 @@ export default function ProductIndex() {
 
     const formatCurrency = (value) => {
         if (value === null || value === undefined) {
-            return "-";
+            return '-';
         }
 
         const number = Number(value);
@@ -103,21 +103,21 @@ export default function ProductIndex() {
             return value;
         }
 
-        return new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
         }).format(number);
     };
 
     const branchLabel = (branches) =>
         branches && branches.length > 0
-            ? branches.map((branch) => branch.name).join(", ")
-            : "-";
+            ? branches.map((branch) => branch.name).join(', ')
+            : '-';
 
     const onPrint = (type) => {
         const query = new URLSearchParams(params).toString();
         const url = `/products/print/${type}?${query}`;
-        window.open(url, "_blank");
+        window.open(url, '_blank');
     };
 
     const renderProductCard = (product) => {
@@ -144,7 +144,7 @@ export default function ProductIndex() {
                             {product.name}
                         </p>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {product.category?.name ?? "Kategori belum diatur"}
+                            {product.category?.name ?? 'Kategori belum diatur'}
                         </p>
                     </div>
                 </div>
@@ -156,7 +156,7 @@ export default function ProductIndex() {
                 )}
 
                 <div className="mt-4">
-                    <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                         Cabang
                     </p>
                     {branches.length ? (
@@ -214,7 +214,7 @@ export default function ProductIndex() {
                 isOpen={isConfirmOpen}
                 setOpenModalStatus={setIsConfirmOpen}
                 title="Konfirmasi Hapus"
-                message={`Hapus produk ${selectedProduct?.name ?? ""}? Tindakan ini tidak dapat dibatalkan.`}
+                message={`Hapus produk ${selectedProduct?.name ?? ''}? Tindakan ini tidak dapat dibatalkan.`}
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
                 type="danger"
@@ -259,20 +259,20 @@ export default function ProductIndex() {
                             }
                             items={[
                                 {
-                                    label: "PDF",
-                                    onClick: () => onPrint("pdf"),
+                                    label: 'PDF',
+                                    onClick: () => onPrint('pdf'),
                                 },
                                 {
-                                    label: "Excel",
-                                    onClick: () => onPrint("excel"),
+                                    label: 'Excel',
+                                    onClick: () => onPrint('excel'),
                                 },
                             ]}
                         />
                     }
                     columns={[
                         {
-                            name: "name",
-                            header: "Nama Produk",
+                            name: 'name',
+                            header: 'Nama Produk',
                             render: (item) => item.name,
                             footer: (
                                 <FormSearch
@@ -284,8 +284,8 @@ export default function ProductIndex() {
                             ),
                         },
                         {
-                            header: "Kategori",
-                            render: (item) => item.category?.name ?? "-",
+                            header: 'Kategori',
+                            render: (item) => item.category?.name ?? '-',
                             footer: (
                                 <FormSearch
                                     name="category"
@@ -296,8 +296,8 @@ export default function ProductIndex() {
                             ),
                         },
                         {
-                            name: "price",
-                            header: "Harga",
+                            name: 'price',
+                            header: 'Harga',
                             render: (item) => (
                                 <span className="font-medium text-slate-700 dark:text-slate-200">
                                     {formatCurrency(item.price)}
@@ -305,7 +305,8 @@ export default function ProductIndex() {
                             ),
                         },
                         {
-                            header: "Cabang",
+                            roles: ['Businessman', 'BusinessOwner'],
+                            header: 'Cabang',
                             render: (item) => (
                                 <span className="text-slate-600 dark:text-slate-300">
                                     {branchLabel(item.branches ?? [])}
@@ -321,7 +322,7 @@ export default function ProductIndex() {
                             ),
                         },
                         {
-                            header: "Aksi",
+                            header: 'Aksi',
                             render: (item) => (
                                 <div className="flex items-center justify-end gap-3">
                                     <Link

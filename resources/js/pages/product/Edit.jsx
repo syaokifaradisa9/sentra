@@ -10,11 +10,23 @@ import FormCheckbox from "../../components/forms/FormCheckBox";
 import FormFile from "../../components/forms/FormFile";
 import Button from "../../components/buttons/Button";
 
-export default function ProductEdit({ product, categories = [], categoryOptions: categoryOptionsProp = [] }) {
+export default function ProductEdit({
+    product,
+    categories = [],
+    categoryOptions: categoryOptionsProp = [],
+    currentRole = "",
+    defaultBranchIds = [],
+}) {
+    const isSmallBusinessOwner = currentRole === "SmallBusinessOwner";
+    const initialBranchIds =
+        isSmallBusinessOwner && defaultBranchIds.length > 0
+            ? [...defaultBranchIds]
+            : product?.branch_ids?.map(Number) ?? [];
+
     const { data, setData, post, processing, errors } = useForm({
         name: product?.name ?? "",
         category_id: product?.category_id ? String(product.category_id) : "",
-        branch_ids: product?.branch_ids?.map(Number) ?? [],
+        branch_ids: initialBranchIds,
         price: product?.price ? String(product.price) : "",
         description: product?.description ?? "",
         photo: null,
@@ -38,6 +50,10 @@ export default function ProductEdit({ product, categories = [], categoryOptions:
     const hasSelectedCategory = Boolean(selectedCategory);
 
     const toggleBranch = (branchId) => {
+        if (isSmallBusinessOwner) {
+            return;
+        }
+
         const numericId = Number(branchId);
         setData((prev) => {
             const list = Array.isArray(prev.branch_ids) ? prev.branch_ids : [];
@@ -61,9 +77,11 @@ export default function ProductEdit({ product, categories = [], categoryOptions:
         setData((prev) => ({
             ...prev,
             category_id: value,
-            branch_ids: (Array.isArray(prev.branch_ids) ? prev.branch_ids : []).filter((id) =>
-                allowedBranchIds.includes(id)
-            ),
+            branch_ids: isSmallBusinessOwner
+                ? [...defaultBranchIds]
+                : (Array.isArray(prev.branch_ids) ? prev.branch_ids : []).filter((id) =>
+                      allowedBranchIds.includes(id)
+                  ),
         }));
     };
 
@@ -86,6 +104,11 @@ export default function ProductEdit({ product, categories = [], categoryOptions:
     const branchValidationMessage = errors.branch_ids
         ?? Object.entries(errors)
             .find(([key]) => key.startsWith("branch_ids."))?.[1];
+
+    const assignedBranchInfo =
+        Array.isArray(product?.branch_names) && product.branch_names.length > 0
+            ? product.branch_names.join(", ")
+            : null;
 
     return (
         <RootLayout title={`Edit Produk #${product.id}`}>
@@ -114,35 +137,50 @@ export default function ProductEdit({ product, categories = [], categoryOptions:
                         />
                     </div>
 
-                    <div className="space-y-3">
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                            Cabang
-                        </p>
-                        {!hasSelectedCategory ? (
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Pilih kategori untuk menampilkan cabang yang tersedia.
+                    {!isSmallBusinessOwner && (
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                                Cabang
                             </p>
-                        ) : availableBranches.length === 0 ? (
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                                Tidak ada cabang yang tersedia untuk kategori ini.
+                            {!hasSelectedCategory ? (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Pilih kategori untuk menampilkan cabang yang tersedia.
+                                </p>
+                            ) : availableBranches.length === 0 ? (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                    Tidak ada cabang yang tersedia untuk kategori ini.
+                                </p>
+                            ) : (
+                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    {availableBranches.map((branch) => (
+                                        <FormCheckbox
+                                            key={branch.id}
+                                            label={branch.name}
+                                            name="branch_ids[]"
+                                            checked={data.branch_ids.includes(branch.id)}
+                                            onChange={() => toggleBranch(branch.id)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                            {branchValidationMessage && (
+                                <p className="text-sm text-red-600">{branchValidationMessage}</p>
+                            )}
+                        </div>
+                    )}
+
+                    {isSmallBusinessOwner && (
+                        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            <p className="font-medium text-slate-700 dark:text-slate-100">
+                                Cabang Otomatis
                             </p>
-                        ) : (
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                {availableBranches.map((branch) => (
-                                    <FormCheckbox
-                                        key={branch.id}
-                                        label={branch.name}
-                                        name="branch_ids[]"
-                                        checked={data.branch_ids.includes(branch.id)}
-                                        onChange={() => toggleBranch(branch.id)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        {branchValidationMessage && (
-                            <p className="text-sm text-red-600">{branchValidationMessage}</p>
-                        )}
-                    </div>
+                            <p>
+                                {assignedBranchInfo
+                                    ? `Produk ini otomatis terhubung ke ${assignedBranchInfo}.`
+                                    : "Produk ini otomatis mengikuti cabang Anda."}
+                            </p>
+                        </div>
+                    )}
 
                     <FormInput
                         label="Harga"

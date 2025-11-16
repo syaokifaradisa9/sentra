@@ -9,6 +9,7 @@ use App\Http\Requests\ProductRequest;
 use App\Models\Product;
 use App\Services\ProductService;
 use App\Services\CategoryService;
+use App\Services\BranchService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -22,6 +23,7 @@ class ProductController extends Controller
         private ProductService $productService,
         private ProductDatatableService $productDatatable,
         private CategoryService $categoryService,
+        private BranchService $branchService,
     ) {}
 
     public function index(): InertiaResponse
@@ -36,18 +38,38 @@ class ProductController extends Controller
 
     public function create(): InertiaResponse
     {
+        $currentUser = $this->currentUser();
+        $currentRole = $currentUser->getRoleNames()->first();
+
         return Inertia::render('product/Create', [
             'categories' => $this->categoriesPayload(),
-            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($this->currentUserId()),
+            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($currentUser->id),
+            'currentRole' => $currentRole,
+            'defaultBranchIds' => $this->resolveSmallBusinessOwnerBranchIds($currentUser),
         ]);
     }
 
     public function store(ProductRequest $request): RedirectResponse
     {
+        $currentUser = $this->currentUser();
+        $productDTO = ProductDTO::fromAppRequest($request);
+        $forcedBranchIds = $this->resolveSmallBusinessOwnerBranchIds($currentUser);
+
+        if (! empty($forcedBranchIds)) {
+            $productDTO = new ProductDTO(
+                name: $productDTO->name,
+                categoryId: $productDTO->categoryId,
+                price: $productDTO->price,
+                description: $productDTO->description,
+                branchIds: $forcedBranchIds,
+                photo: $productDTO->photo,
+            );
+        }
+
         try {
             $this->productService->store(
-                ProductDTO::fromAppRequest($request),
-                $this->currentUserId()
+                $productDTO,
+                $currentUser->id
             );
 
             return to_route('products.index')->with('success', 'Produk berhasil dibuat');
@@ -63,6 +85,8 @@ class ProductController extends Controller
     public function edit(Product $product): InertiaResponse
     {
         $product->load('branches');
+        $currentUser = $this->currentUser();
+        $currentRole = $currentUser->getRoleNames()->first();
 
         return Inertia::render('product/Edit', [
             'product' => [
@@ -72,20 +96,38 @@ class ProductController extends Controller
                 'price' => (float) $product->price,
                 'description' => $product->description,
                 'branch_ids' => $product->branches->pluck('id'),
+                'branch_names' => $product->branches->pluck('name')->values(),
                 'photo_url' => $product->photo ? asset('storage/' . $product->photo) : null,
             ],
             'categories' => $this->categoriesPayload(),
-            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($this->currentUserId()),
+            'categoryOptions' => $this->categoryService->getOptionsByOwnerId($currentUser->id),
+            'currentRole' => $currentRole,
+            'defaultBranchIds' => $this->resolveSmallBusinessOwnerBranchIds($currentUser),
         ]);
     }
 
     public function update(ProductRequest $request, Product $product): RedirectResponse
     {
+        $currentUser = $this->currentUser();
+        $productDTO = ProductDTO::fromAppRequest($request);
+        $forcedBranchIds = $this->resolveSmallBusinessOwnerBranchIds($currentUser);
+
+        if (! empty($forcedBranchIds)) {
+            $productDTO = new ProductDTO(
+                name: $productDTO->name,
+                categoryId: $productDTO->categoryId,
+                price: $productDTO->price,
+                description: $productDTO->description,
+                branchIds: $forcedBranchIds,
+                photo: $productDTO->photo,
+            );
+        }
+
         try {
             $updated = $this->productService->update(
                 $product->id,
-                ProductDTO::fromAppRequest($request),
-                $this->currentUserId()
+                $productDTO,
+                $currentUser->id
             );
 
             if (! $updated) {
@@ -162,5 +204,16 @@ class ProductController extends Controller
     private function currentUserId(): int
     {
         return (int) $this->currentUser()->id;
+    }
+
+    private function resolveSmallBusinessOwnerBranchIds(User $user): array
+    {
+        if (! $user->hasRole('SmallBusinessOwner')) {
+            return [];
+        }
+
+        $branchIds = $this->branchService->getBranchIdsForUser($user->id);
+
+        return array_slice($branchIds, 0, 1);
     }
 }

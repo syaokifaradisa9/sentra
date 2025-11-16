@@ -1,10 +1,8 @@
 <?php
 
 use App\Models\Category;
-use App\Models\User;
 use App\Services\BranchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\Concerns\InteractsWithCategory;
 use function Pest\Laravel\actingAs;
 
@@ -70,7 +68,7 @@ it('deletes a category', function () {
 });
 
 it('forces a SmallBusinessOwner to store categories for a single branch', function () {
-    $user = createSmallBusinessOwnerUser();
+    $user = $this->createSmallBusinessOwnerUser();
     $branchOne = $this->createBranch();
     $branchTwo = $this->createBranch();
 
@@ -94,7 +92,7 @@ it('forces a SmallBusinessOwner to store categories for a single branch', functi
 });
 
 it('forces a SmallBusinessOwner to keep a single branch when updating categories', function () {
-    $user = createSmallBusinessOwnerUser();
+    $user = $this->createSmallBusinessOwnerUser();
     $branchOne = $this->createBranch();
     $branchTwo = $this->createBranch();
 
@@ -120,17 +118,3 @@ it('forces a SmallBusinessOwner to keep a single branch when updating categories
     expect($category->branches)->toHaveCount(1)
         ->and($category->branches->first()->id)->toBe($expectedBranchId);
 });
-
-function createSmallBusinessOwnerUser(array $attributes = []): User
-{
-    $role = Role::findOrCreate('SmallBusinessOwner', 'web');
-
-    /** @var User $user */
-    $user = User::factory()->create(array_merge([
-        'position' => 'SmallBusinessOwner',
-    ], $attributes));
-
-    $user->assignRole($role);
-
-    return $user;
-}

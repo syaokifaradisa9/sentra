@@ -18,6 +18,20 @@ trait InteractsWithBusiness
         return $user;
     }
 
+    protected function createSmallBusinessOwnerUser(array $attributes = []): User
+    {
+        $role = Role::findOrCreate('SmallBusinessOwner', 'web');
+
+        /** @var User $user */
+        $user = User::factory()->create(array_merge([
+            'position' => 'SmallBusinessOwner',
+        ], $attributes));
+
+        $user->assignRole($role);
+
+        return $user;
+    }
+
     protected function createBusiness(array $attributes = []): Business
     {
         $owner = $attributes['owner_id'] ?? $this->createBusinessUser()->id;
@@ -38,4 +52,3 @@ trait InteractsWithBusiness
         Role::findOrCreate('Businessman', 'web');
     }
 }
-

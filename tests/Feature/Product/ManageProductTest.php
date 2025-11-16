@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Product;
+use App\Services\BranchService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\InteractsWithProduct;
@@ -76,3 +78,54 @@ it('deletes a product', function () {
     $this->assertDatabaseMissing('products', ['id' => $product->id]);
 });
 
+it('forces a SmallBusinessOwner to store products for a single branch', function () {
+    $user = $this->createSmallBusinessOwnerUser();
+    $branchOne = $this->createBranch(['owner_id' => $user->id]);
+    $branchTwo = $this->createBranch(['owner_id' => $user->id]);
+    $category = $this->createCategory(branchIds: [$branchOne->id, $branchTwo->id]);
+
+    $payload = $this->productPayload($category, $branchTwo, [
+        'branch_ids' => [$branchOne->id, $branchTwo->id],
+    ]);
+
+    actingAs($user)
+        ->post(route('products.store'), $payload)
+        ->assertRedirect(route('products.index'))
+        ->assertSessionHas('success');
+
+    $product = Product::with('branches')->firstOrFail();
+    $expectedBranchId = app(BranchService::class)->getBranchIdsForUser($user->id)[0];
+
+    expect($product->branches)->toHaveCount(1)
+        ->and($product->branches->first()->id)->toBe($expectedBranchId);
+});
+
+it('forces a SmallBusinessOwner to keep a single branch when updating products', function () {
+    $user = $this->createSmallBusinessOwnerUser();
+    $branchOne = $this->createBranch(['owner_id' => $user->id]);
+    $branchTwo = $this->createBranch(['owner_id' => $user->id]);
+    $category = $this->createCategory(branchIds: [$branchOne->id, $branchTwo->id]);
+    $product = $this->createProduct([
+        'category_id' => $category->id,
+        'name' => 'Small Owner Product',
+    ], [$branchOne->id]);
+
+    $payload = [
+        'name' => 'Updated SBO Product',
+        'category_id' => $category->id,
+        'price' => 56000,
+        'description' => 'Updated description',
+        'branch_ids' => [$branchOne->id, $branchTwo->id],
+    ];
+
+    actingAs($user)
+        ->post(route('products.update', $product), $payload)
+        ->assertRedirect(route('products.index'))
+        ->assertSessionHas('success');
+
+    $product->refresh()->load('branches');
+    $expectedBranchId = app(BranchService::class)->getBranchIdsForUser($user->id)[0];
+
+    expect($product->branches)->toHaveCount(1)
+        ->and($product->branches->first()->id)->toBe($expectedBranchId);
+});
