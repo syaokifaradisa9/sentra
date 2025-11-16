@@ -12,6 +12,7 @@ import {
     CATEGORY_ICON_LABEL_MAP,
     CATEGORY_ICON_MAP,
 } from '../../constants/categoryIcons';
+import CheckRoles from '../../utils/CheckRoles';
 
 const initialDatatableState = {
     data: [],
@@ -209,11 +210,16 @@ export default function CategoryIndex() {
             <ContentCard
                 title="Data Kategori"
                 additionalButton={
-                    <Button
-                        className="w-full"
-                        label="Tambah Kategori"
-                        href="/categories/create"
-                        icon={<Plus className="size-4" />}
+                    <CheckRoles
+                        roles={['Businessman', 'BusinessOwner']}
+                        children={
+                            <Button
+                                className="w-full"
+                                label="Tambah Kategori"
+                                href="/categories/create"
+                                icon={<Plus className="size-4" />}
+                            />
+                        }
                     />
                 }
             >
@@ -294,6 +300,7 @@ export default function CategoryIndex() {
                             ),
                         },
                         {
+                            roles: ['Businessman', 'BusinessOwner'],
                             header: 'Aksi',
                             render: (item) => (
                                 <div className="flex items-center justify-end gap-3">

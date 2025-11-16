@@ -8,6 +8,7 @@ import FormSearch from '../../components/forms/FormSearch';
 import ContentCard from '../../components/layouts/ContentCard';
 import RootLayout from '../../components/layouts/RootLayout';
 import DataTable from '../../components/tables/Datatable';
+import CheckRoles from '../../utils/CheckRoles';
 
 const currencyFormatter = new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -130,10 +131,7 @@ const initialDatatableState = {
     links: [],
 };
 
-export default function PromoIndex({
-    analytics = {},
-    priceHistories = [],
-}) {
+export default function PromoIndex({ analytics = {}, priceHistories = [] }) {
     const [dataTable, setDataTable] = useState(initialDatatableState);
     const [isLoading, setIsLoading] = useState(false);
     const [params, setParams] = useState({
@@ -151,7 +149,10 @@ export default function PromoIndex({
         () => [
             { title: 'Total Promo', value: analytics.total_promos ?? 0 },
             { title: 'Promo Aktif', value: analytics.active_promos ?? 0 },
-            { title: 'Produk Terpengaruh', value: analytics.total_products ?? 0 },
+            {
+                title: 'Produk Terpengaruh',
+                value: analytics.total_products ?? 0,
+            },
             { title: 'Total Penggunaan', value: analytics.total_usage ?? 0 },
         ],
         [analytics],
@@ -238,14 +239,15 @@ export default function PromoIndex({
         <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-primary/5 dark:border-slate-700/60 dark:bg-slate-900/70">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-widest text-primary/70 dark:text-teal-200/70">
+                    <p className="text-xs font-semibold tracking-widest text-primary/70 uppercase dark:text-teal-200/70">
                         {promo.product?.name ?? '-'}
                     </p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
                         {promo.product?.category?.name ?? '-'}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Cakupan: {promo.scope_label ?? '-'} ({scopeTypeLabel(promo.scope_type)})
+                        Cakupan: {promo.scope_label ?? '-'} (
+                        {scopeTypeLabel(promo.scope_type)})
                     </p>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {discountLabel(promo)}
@@ -329,7 +331,9 @@ export default function PromoIndex({
                 setOpenModalStatus={setIsConfirmOpen}
                 title="Konfirmasi Hapus"
                 message={`Hapus promo ${
-                    selectedPromo?.scope_label ?? selectedPromo?.product?.name ?? ''
+                    selectedPromo?.scope_label ??
+                    selectedPromo?.product?.name ??
+                    ''
                 }? Tindakan ini tidak dapat dibatalkan.`}
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
@@ -367,10 +371,15 @@ export default function PromoIndex({
             <ContentCard
                 title="Daftar Promo"
                 additionalButton={
-                    <Button
-                        label="Tambah Promo"
-                        href="/promos/create"
-                        icon={<Plus className="size-4" />}
+                    <CheckRoles
+                        roles={['Businessman', 'BusinessOwner']}
+                        children={
+                            <Button
+                                label="Tambah Promo"
+                                href="/promos/create"
+                                icon={<Plus className="size-4" />}
+                            />
+                        }
                     />
                 }
             >
@@ -424,7 +433,9 @@ export default function PromoIndex({
                             render: (item) => (
                                 <div className="flex flex-col">
                                     <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                        {item.scope_label ?? item.product?.name ?? '-'}
+                                        {item.scope_label ??
+                                            item.product?.name ??
+                                            '-'}
                                     </span>
                                     <span className="text-sm text-slate-500 dark:text-slate-400">
                                         {scopeTypeLabel(item.scope_type)}
@@ -542,7 +553,7 @@ export default function PromoIndex({
                             >
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
-                                        <p className="text-xs font-semibold uppercase tracking-widest text-primary/70 dark:text-teal-200/70">
+                                        <p className="text-xs font-semibold tracking-widest text-primary/70 uppercase dark:text-teal-200/70">
                                             {history.promo?.label ?? '-'}
                                         </p>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -557,13 +568,17 @@ export default function PromoIndex({
                                     <div className="flex items-center justify-between">
                                         <span>Harga Awal</span>
                                         <span className="font-semibold text-slate-800 dark:text-slate-100">
-                                            {renderCurrency(history.base_price ?? null)}
+                                            {renderCurrency(
+                                                history.base_price ?? null,
+                                            )}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span>Harga Promo</span>
                                         <span className="font-semibold text-primary dark:text-teal-200">
-                                            {renderCurrency(history.promo_price ?? null)}
+                                            {renderCurrency(
+                                                history.promo_price ?? null,
+                                            )}
                                         </span>
                                     </div>
                                 </div>

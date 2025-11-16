@@ -15,12 +15,13 @@ Route::prefix('promos')
                 Route::get('/pdf', 'printPdf')->name('pdf');
                 Route::get('/excel', 'printExcel')->name('excel');
             });
-        Route::get('/create', 'create')->name('create');
-        Route::post('/', 'store')->name('store');
-        Route::prefix('{promo}')->group(function () {
-            Route::get('/edit', 'edit')->name('edit');
-            Route::put('/', 'update')->name('update');
-            Route::delete('/', 'destroy')->name('destroy');
+        Route::middleware('roles:Businessman,BusinessOwner')->group(function () {
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::prefix('{promo}')->group(function () {
+                Route::get('/edit', 'edit')->name('edit');
+                Route::put('/', 'update')->name('update');
+                Route::delete('/', 'destroy')->name('destroy');
+            });
         });
     });
-

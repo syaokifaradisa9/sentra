@@ -12,9 +12,26 @@ use App\Http\Requests\Common\DatatableRequest;
 class CategoryDatatableService {
 
     private function getStartedQuery(DatatableRequest $request, $loggedUser){
-        $query = Category::whereHas('branches', function ($q) use ($loggedUser) {
-            $q->where('owner_id', $loggedUser->id);
-        });
+        $query = Category::query();
+
+        if ($loggedUser->hasAnyRole(['Businessman', 'BusinessOwner', 'SmallBusinessOwner'])) {
+            $query->whereHas('branches', function ($q) use ($loggedUser) {
+                $q->where('owner_id', $loggedUser->id);
+            });
+        } else {
+            $managedBranchIds = $loggedUser->branchAssignments
+                ->pluck('branch_id')
+                ->map(static fn ($id) => (int) $id)
+                ->all();
+
+            if (empty($managedBranchIds)) {
+                return Category::query()->whereRaw('1 = 0');
+            }
+
+            $query->whereHas('branches', function ($builder) use ($managedBranchIds) {
+                $builder->whereIn('branches.id', $managedBranchIds);
+            });
+        }
 
         // Handle sorting
         $sortColumn = $request->input('sort_by', 'name');

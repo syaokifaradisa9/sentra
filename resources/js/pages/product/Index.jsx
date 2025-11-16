@@ -8,6 +8,7 @@ import FormSearch from '../../components/forms/FormSearch';
 import ContentCard from '../../components/layouts/ContentCard';
 import RootLayout from '../../components/layouts/RootLayout';
 import DataTable from '../../components/tables/Datatable';
+import CheckRoles from '../../utils/CheckRoles';
 
 const initialDatatableState = {
     data: [],
@@ -232,11 +233,16 @@ export default function ProductIndex() {
             <ContentCard
                 title="Data Produk"
                 additionalButton={
-                    <Button
-                        className="w-full"
-                        label="Tambah Produk"
-                        href="/products/create"
-                        icon={<Plus className="size-4" />}
+                    <CheckRoles
+                        roles={['Businessman', 'BusinessOwner']}
+                        children={
+                            <Button
+                                className="w-full"
+                                label="Tambah Produk"
+                                href="/products/create"
+                                icon={<Plus className="size-4" />}
+                            />
+                        }
                     />
                 }
             >
@@ -322,6 +328,7 @@ export default function ProductIndex() {
                             ),
                         },
                         {
+                            roles: ['Businessman', 'BusinessOwner'],
                             header: 'Aksi',
                             render: (item) => (
                                 <div className="flex items-center justify-end gap-3">
