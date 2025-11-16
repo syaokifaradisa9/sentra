@@ -69,11 +69,8 @@ it('deletes a category', function () {
 
 it('forces a SmallBusinessOwner to store categories for a single branch', function () {
     $user = $this->createSmallBusinessOwnerUser();
-    $branchOne = $this->createBranch();
-    $branchTwo = $this->createBranch();
-
-    $branchOne->users()->attach($user->id);
-    $branchTwo->users()->attach($user->id);
+    $branchOne = $this->createBranch(['owner_id' => $user->id]);
+    $branchTwo = $this->createBranch(['owner_id' => $user->id]);
 
     $payload = $this->categoryPayload($branchTwo, [
         'branch_ids' => [$branchOne->id, $branchTwo->id],
@@ -93,11 +90,8 @@ it('forces a SmallBusinessOwner to store categories for a single branch', functi
 
 it('forces a SmallBusinessOwner to keep a single branch when updating categories', function () {
     $user = $this->createSmallBusinessOwnerUser();
-    $branchOne = $this->createBranch();
-    $branchTwo = $this->createBranch();
-
-    $branchOne->users()->attach($user->id);
-    $branchTwo->users()->attach($user->id);
+    $branchOne = $this->createBranch(['owner_id' => $user->id]);
+    $branchTwo = $this->createBranch(['owner_id' => $user->id]);
 
     $category = $this->createCategory(branchIds: [$branchOne->id]);
 

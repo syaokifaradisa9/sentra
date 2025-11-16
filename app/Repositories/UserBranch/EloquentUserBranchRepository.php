@@ -29,8 +29,11 @@ class EloquentUserBranchRepository implements UserBranchRepository
         return $this->model->where('branch_id', $branchId)->delete() > 0;
     }
 
-    public function batchInsert(array $data): void
+    public function assignBranch(int $userId, int $branchId): void
     {
-        $this->model->insert($data);
+        $this->model->updateOrCreate(
+            ['user_id' => $userId],
+            ['branch_id' => $branchId]
+        );
     }
 }

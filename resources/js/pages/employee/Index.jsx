@@ -1,13 +1,22 @@
-import { useEffect, useState } from "react";
-import { Link, router } from "@inertiajs/react";
-import { Edit, Mail, MapPin, Phone, Plus, Printer, Trash2, User } from "lucide-react";
-import RootLayout from "../../components/layouts/RootLayout";
-import ContentCard from "../../components/layouts/ContentCard";
-import Button from "../../components/buttons/Button";
-import DropdownButton from "../../components/buttons/DropdownButton";
-import ConfirmationAlert from "../../components/alerts/ConfirmationAlert";
-import DataTable from "../../components/tables/Datatable";
-import FormSearch from "../../components/forms/FormSearch";
+import { Link, router } from '@inertiajs/react';
+import {
+    Edit,
+    Mail,
+    MapPin,
+    Phone,
+    Plus,
+    Printer,
+    Trash2,
+    User,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import ConfirmationAlert from '../../components/alerts/ConfirmationAlert';
+import Button from '../../components/buttons/Button';
+import DropdownButton from '../../components/buttons/DropdownButton';
+import FormSearch from '../../components/forms/FormSearch';
+import ContentCard from '../../components/layouts/ContentCard';
+import RootLayout from '../../components/layouts/RootLayout';
+import DataTable from '../../components/tables/Datatable';
 
 const initialDatatableState = {
     data: [],
@@ -23,15 +32,15 @@ export default function EmployeeIndex() {
     const [dataTable, setDataTable] = useState(initialDatatableState);
     const [isLoading, setIsLoading] = useState(false);
     const [params, setParams] = useState({
-        search: "",
+        search: '',
         limit: 20,
         page: 1,
-        sort_by: "created_at",
-        sort_direction: "desc",
-        name: "",
-        email: "",
-        phone: "",
-        position: "",
+        sort_by: 'created_at',
+        sort_direction: 'desc',
+        name: '',
+        email: '',
+        phone: '',
+        position: '',
     });
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -44,7 +53,7 @@ export default function EmployeeIndex() {
             const data = await response.json();
             setDataTable(data);
         } catch (error) {
-            console.error("Failed to load employee datatable", error);
+            console.error('Failed to load employee datatable', error);
             setDataTable({ ...initialDatatableState });
         } finally {
             setIsLoading(false);
@@ -59,7 +68,7 @@ export default function EmployeeIndex() {
         const { name, value } = event.target;
         setParams((prev) => ({
             ...prev,
-            page: name === "limit" ? 1 : prev.page,
+            page: name === 'limit' ? 1 : prev.page,
             [name]: value,
         }));
     };
@@ -68,20 +77,21 @@ export default function EmployeeIndex() {
         event.preventDefault();
         try {
             const url = new URL(event.target.href);
-            const page = url.searchParams.get("page") ?? "1";
+            const page = url.searchParams.get('page') ?? '1';
             setParams((prev) => ({
                 ...prev,
                 page: Number(page),
             }));
         } catch (error) {
-            console.error("Failed to change page", error);
+            console.error('Failed to change page', error);
         }
     };
 
     const handleSort = (columnName) => {
         setParams((prev) => {
             const isSameColumn = prev.sort_by === columnName;
-            const sortDirection = isSameColumn && prev.sort_direction === "asc" ? "desc" : "asc";
+            const sortDirection =
+                isSameColumn && prev.sort_direction === 'asc' ? 'desc' : 'asc';
 
             return {
                 ...prev,
@@ -99,17 +109,17 @@ export default function EmployeeIndex() {
     const onPrint = (type) => {
         const query = new URLSearchParams(params).toString();
         const url = `/employees/print/${type}?${query}`;
-        window.open(url, "_blank");
+        window.open(url, '_blank');
     };
 
     const branchLabel = (branches) =>
         branches && branches.length > 0
-            ? branches.map((branch) => branch.name).join(", ")
-            : "-";
+            ? branches.map((branch) => branch.name).join(', ')
+            : '-';
 
     const renderEmployeeCard = (employee) => {
         const branches = employee.branches ?? [];
-        const initial = (employee.name ?? "?").charAt(0).toUpperCase();
+        const initial = (employee.name ?? '?').charAt(0).toUpperCase();
 
         return (
             <div className="mb-4 rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-primary/5 dark:border-slate-700/60 dark:bg-slate-900/70">
@@ -118,14 +128,14 @@ export default function EmployeeIndex() {
                         {initial}
                     </span>
                     <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                        <p className="text-xs font-medium tracking-wide text-slate-400 uppercase dark:text-slate-500">
                             Karyawan
                         </p>
                         <p className="text-lg font-semibold text-slate-800 dark:text-white">
                             {employee.name}
                         </p>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
-                            {employee.position || "Belum ada jabatan"}
+                            {employee.position || 'Belum ada jabatan'}
                         </p>
                     </div>
                 </div>
@@ -137,7 +147,7 @@ export default function EmployeeIndex() {
                     </div>
                     <div className="flex items-center gap-2">
                         <Phone className="size-4 text-slate-400 dark:text-slate-500" />
-                        <span>{employee.phone || "Belum ada telepon"}</span>
+                        <span>{employee.phone || 'Belum ada telepon'}</span>
                     </div>
                     <div className="flex items-start gap-2">
                         <MapPin className="mt-0.5 size-4 text-slate-400 dark:text-slate-500" />
@@ -172,7 +182,7 @@ export default function EmployeeIndex() {
                 isOpen={isConfirmOpen}
                 setOpenModalStatus={setIsConfirmOpen}
                 title="Konfirmasi Hapus"
-                message={`Hapus karyawan ${selectedEmployee?.name ?? ""}? Tindakan ini tidak dapat dibatalkan.`}
+                message={`Hapus karyawan ${selectedEmployee?.name ?? ''}? Tindakan ini tidak dapat dibatalkan.`}
                 confirmText="Ya, Hapus"
                 cancelText="Batal"
                 type="danger"
@@ -208,20 +218,20 @@ export default function EmployeeIndex() {
                             }
                             items={[
                                 {
-                                    label: "PDF",
-                                    onClick: () => onPrint("pdf"),
+                                    label: 'PDF',
+                                    onClick: () => onPrint('pdf'),
                                 },
                                 {
-                                    label: "Excel",
-                                    onClick: () => onPrint("excel"),
+                                    label: 'Excel',
+                                    onClick: () => onPrint('excel'),
                                 },
                             ]}
                         />
                     }
                     columns={[
                         {
-                            name: "name",
-                            header: "Nama",
+                            name: 'name',
+                            header: 'Nama',
                             render: (item) => (
                                 <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                     <User className="size-4 text-gray-400 dark:text-slate-500" />
@@ -237,8 +247,8 @@ export default function EmployeeIndex() {
                             ),
                         },
                         {
-                            name: "email",
-                            header: "Email",
+                            name: 'email',
+                            header: 'Email',
                             render: (item) => (
                                 <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                     <Mail className="size-4 text-gray-400 dark:text-slate-500" />
@@ -254,12 +264,12 @@ export default function EmployeeIndex() {
                             ),
                         },
                         {
-                            name: "phone",
-                            header: "Telepon",
+                            name: 'phone',
+                            header: 'Telepon',
                             render: (item) => (
                                 <span className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                     <Phone className="size-4 text-gray-400 dark:text-slate-500" />
-                                    {item.phone || "-"}
+                                    {item.phone || '-'}
                                 </span>
                             ),
                             footer: (
@@ -271,9 +281,9 @@ export default function EmployeeIndex() {
                             ),
                         },
                         {
-                            name: "position",
-                            header: "Jabatan",
-                            render: (item) => item.position || "-",
+                            name: 'position',
+                            header: 'Jabatan',
+                            render: (item) => item.position || '-',
                             footer: (
                                 <FormSearch
                                     name="position"
@@ -284,18 +294,21 @@ export default function EmployeeIndex() {
                         },
                         {
                             name: null,
-                            header: "Cabang",
+                            roles: ['Businessman', 'BusinessOwner'],
+                            header: 'Cabang',
                             render: (item) => (
                                 <span className="inline-flex items-start gap-2 text-slate-600 dark:text-slate-300">
                                     <MapPin className="size-4 text-gray-400 dark:text-slate-500" />
-                                    <span>{branchLabel(item.branches ?? [])}</span>
+                                    <span>
+                                        {branchLabel(item.branches ?? [])}
+                                    </span>
                                 </span>
                             ),
                         },
                         {
-                            header: "Aksi",
+                            header: 'Aksi',
                             render: (item) => (
-                                <div className="flex items-center gap-3 justify-end">
+                                <div className="flex items-center justify-end gap-3">
                                     <Link
                                         href={`/employees/${item.id}/edit`}
                                         className="inline-flex items-center rounded-md border border-primary/40 px-3 py-1 text-sm text-primary transition hover:bg-primary hover:text-white dark:border-teal-400/40 dark:text-teal-300 dark:hover:bg-teal-400/10"

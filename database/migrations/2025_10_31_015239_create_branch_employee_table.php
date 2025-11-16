@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_branches', function (Blueprint $table) {
+        Schema::create('branch_employee', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('branch_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-            
-            // Ensure a user can only be assigned to a branch once
-            $table->unique(['user_id', 'branch_id']);
+
+            $table->unique('user_id');
         });
     }
 
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_branches');
+        Schema::dropIfExists('branch_employee');
     }
 };

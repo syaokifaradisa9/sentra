@@ -9,6 +9,8 @@ class UserBranch extends Model
 {
     use HasFactory;
 
+    protected $table = 'branch_employee';
+
     protected $fillable = [
         'user_id',
         'branch_id',

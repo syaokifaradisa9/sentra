@@ -20,14 +20,18 @@ use Inertia\Response as InertiaResponse;
 
 class EmployeeController extends Controller
 {
-    private $loggedUser;
+    private ?User $loggedUser = null;
 
     public function __construct(
         private EmployeeService $employeeService,
         private BusinessService $businessService,
         private \App\Datatables\EmployeeDatatableService $employeeDatatable,
     ) {
-        $this->loggedUser = Auth::user();
+        $this->middleware(function ($request, $next) {
+            $this->loggedUser = $request->user();
+
+            return $next($request);
+        });
     }
 
     public function index(): InertiaResponse
@@ -129,7 +133,7 @@ class EmployeeController extends Controller
                 'phone' => $employeeModel->phone,
                 'address' => $employeeModel->address,
                 'position' => $employeeModel->position,
-            'branch_ids' => $employeeModel->branches->pluck('id')->values()->all(),
+                'branch_id' => $employeeModel->branches->pluck('id')->first(),
                 'business_id' => $selectedBusinessId,
             ],
             'businesses' => $businesses->toArray(),

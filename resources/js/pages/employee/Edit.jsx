@@ -21,10 +21,9 @@ export default function EmployeeEdit({
         ? String(employee.business_id || businesses[0]?.id || '')
         : '';
 
-    const initialBranchId =
-        employee.branch_ids && employee.branch_ids.length > 0
-            ? String(employee.branch_ids[0]) // Take only the first branch
-            : '';
+    const initialBranchId = employee.branch_id
+        ? String(employee.branch_id)
+        : '';
 
     const [formData, setFormData] = useState({
         name: employee.name || '',
@@ -74,14 +73,17 @@ export default function EmployeeEdit({
 
         const payload = {
             ...formData,
-            // Convert single branch_id to array format expected by backend
-            branch_ids: formData.branch_id
-                ? [parseInt(formData.branch_id)]
-                : [],
+            branch_id: formData.branch_id
+                ? parseInt(formData.branch_id, 10)
+                : null,
         };
 
         if (!isBusinessman) {
             delete payload.business_id;
+        }
+
+        if (isSmallBusinessOwner) {
+            delete payload.branch_id;
         }
 
         if (!payload.password) {
@@ -109,7 +111,7 @@ export default function EmployeeEdit({
                     Edit data karyawan yang sudah ada
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                         <FormInput
                             name="name"
                             label="Nama Lengkap"
@@ -117,22 +119,107 @@ export default function EmployeeEdit({
                             onChange={handleChange}
                             error={errors.name}
                             placeholder="Masukkan nama lengkap"
-                            required
                             icon={<User className="h-5 w-5" />}
                         />
 
                         <FormInput
-                            name="email"
-                            label="Email"
-                            type="email"
-                            value={formData.email}
+                            name="phone"
+                            label="Nomor Telepon"
+                            value={formData.phone}
                             onChange={handleChange}
-                            error={errors.email}
-                            placeholder="Masukkan alamat email"
-                            required
+                            error={errors.phone}
+                            placeholder="Masukkan nomor telepon"
                             icon={<User className="h-5 w-5" />}
                         />
 
+                        <FormInput
+                            name="position"
+                            label="Jabatan"
+                            value={formData.position}
+                            onChange={handleChange}
+                            error={errors.position}
+                            placeholder="Masukkan jabatan"
+                            icon={<User className="h-5 w-5" />}
+                        />
+                    </div>
+
+                    <FormTextArea
+                        name="address"
+                        label="Alamat"
+                        value={formData.address}
+                        onChange={handleChange}
+                        error={errors.address}
+                        placeholder="Masukkan alamat lengkap"
+                        rows={3}
+                    />
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        {isBusinessman && (
+                            <FormSelect
+                                name="business_id"
+                                label="Bisnis"
+                                value={formData.business_id}
+                                onChange={handleBusinessChange}
+                                options={businesses.map((business) => ({
+                                    value: business.id,
+                                    label: business.name,
+                                }))}
+                                placeholder="Pilih bisnis"
+                                error={errors.business_id}
+                                icon={<Building2 className="h-5 w-5" />}
+                            />
+                        )}
+
+                        {isSmallBusinessOwner ? (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:col-span-2">
+                                Cabang untuk karyawan ini akan mengikuti cabang
+                                pemilik saat ini.
+                            </div>
+                        ) : (
+                            <FormSelect
+                                name="branch_id"
+                                label="Cabang"
+                                value={formData.branch_id}
+                                onChange={handleChange}
+                                options={
+                                    isBusinessman
+                                        ? branches
+                                              .filter(
+                                                  (branch) =>
+                                                      String(
+                                                          branch.business_id,
+                                                      ) ===
+                                                      String(
+                                                          formData.business_id,
+                                                      ),
+                                              )
+                                              .map((branch) => ({
+                                                  value: branch.id,
+                                                  label: branch.name,
+                                              }))
+                                        : branches.map((branch) => ({
+                                              value: branch.id,
+                                              label: branch.name,
+                                          }))
+                                }
+                                placeholder="Pilih cabang"
+                                error={errors.branch_id}
+                            />
+                        )}
+                    </div>
+
+                    <FormInput
+                        name="email"
+                        label="Email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        error={errors.email}
+                        placeholder="Masukkan alamat email"
+                        icon={<User className="h-5 w-5" />}
+                    />
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <FormInput
                             name="password"
                             label="Kata Sandi Baru (Opsional)"
@@ -181,91 +268,7 @@ export default function EmployeeEdit({
                                 )
                             }
                         />
-
-                        <FormInput
-                            name="phone"
-                            label="Nomor Telepon"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            error={errors.phone}
-                            placeholder="Masukkan nomor telepon"
-                            required
-                            icon={<User className="h-5 w-5" />}
-                        />
-
-                        <FormInput
-                            name="position"
-                            label="Jabatan"
-                            value={formData.position}
-                            onChange={handleChange}
-                            error={errors.position}
-                            placeholder="Masukkan jabatan"
-                            required
-                            icon={<User className="h-5 w-5" />}
-                        />
                     </div>
-
-                    <FormTextArea
-                        name="address"
-                        label="Alamat"
-                        value={formData.address}
-                        onChange={handleChange}
-                        error={errors.address}
-                        placeholder="Masukkan alamat lengkap"
-                        required
-                        rows={3}
-                    />
-
-                    {isBusinessman && (
-                        <FormSelect
-                            name="business_id"
-                            label="Bisnis"
-                            value={formData.business_id}
-                            onChange={handleBusinessChange}
-                            options={businesses.map((business) => ({
-                                value: business.id,
-                                label: business.name,
-                            }))}
-                            placeholder="Pilih bisnis"
-                            error={errors.business_id}
-                            icon={<Building2 className="h-5 w-5" />}
-                            required
-                        />
-                    )}
-
-                    {isSmallBusinessOwner ? (
-                        <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-                            Cabang untuk karyawan ini akan mengikuti cabang
-                            pemilik saat ini.
-                        </div>
-                    ) : (
-                        <FormSelect
-                            name="branch_id"
-                            label="Cabang"
-                            value={formData.branch_id}
-                            onChange={handleChange}
-                            options={
-                                isBusinessman
-                                    ? branches
-                                          .filter(
-                                              (branch) =>
-                                                  String(branch.business_id) ===
-                                                  String(formData.business_id),
-                                          )
-                                          .map((branch) => ({
-                                              value: branch.id,
-                                              label: branch.name,
-                                          }))
-                                    : branches.map((branch) => ({
-                                          value: branch.id,
-                                          label: branch.name,
-                                      }))
-                            }
-                            placeholder="Pilih cabang"
-                            error={errors.branch_id}
-                            required
-                        />
-                    )}
                     <Button
                         icon={<Save className="size-4" />}
                         className="w-full"

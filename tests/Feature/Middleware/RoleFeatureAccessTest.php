@@ -15,18 +15,18 @@ beforeEach(function () {
 
 it('Businessman dapat mengakses semua modul', function () {
     $user = createUserWithRole('Businessman');
-    assertAllowed($user, ['dashboard', 'cashier', 'business', 'branches', 'categories', 'products', 'promos']);
+    assertAllowed($user, ['dashboard', 'cashier', 'business', 'branches', 'categories', 'products', 'promos', 'employees']);
 });
 
 it('BusinessOwner tidak boleh membuka menu business', function () {
     $user = createUserWithRole('BusinessOwner');
-    assertAllowed($user, ['dashboard', 'cashier', 'branches', 'categories', 'products', 'promos']);
+    assertAllowed($user, ['dashboard', 'cashier', 'branches', 'categories', 'products', 'promos', 'employees']);
     assertForbidden($user, ['business']);
 });
 
 it('SmallBusinessOwner dilarang pada bisnis dan cabang', function () {
     $user = createUserWithRole('SmallBusinessOwner');
-    assertAllowed($user, ['dashboard', 'cashier', 'categories', 'products', 'promos']);
+    assertAllowed($user, ['dashboard', 'cashier', 'categories', 'products', 'promos', 'employees']);
     assertForbidden($user, ['business', 'branches']);
 });
 
@@ -52,6 +52,7 @@ function featureRoutes(): array
         'categories' => route('categories.index'),
         'products' => route('products.index'),
         'promos' => route('promos.index'),
+        'employees' => route('employees.index'),
     ];
 }
 

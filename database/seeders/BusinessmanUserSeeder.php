@@ -7,7 +7,6 @@ use App\Models\Branch;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
-use App\Models\UserBranch;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
@@ -144,11 +143,6 @@ class BusinessmanUserSeeder extends Seeder
                         'closing_time' => $branchData['closing_time'],
                     ]
                 );
-
-                UserBranch::firstOrCreate([
-                    'user_id' => $businessmanUser->id,
-                    'branch_id' => $branch->id,
-                ]);
 
                 $branchIds[] = $branch->id;
             }

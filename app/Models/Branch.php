@@ -35,7 +35,7 @@ class Branch extends Model
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'user_branches')
+        return $this->belongsToMany(User::class, 'branch_employee')
             ->withTimestamps();
     }
 }

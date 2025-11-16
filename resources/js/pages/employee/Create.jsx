@@ -73,14 +73,17 @@ export default function EmployeeCreate({
 
         const payload = {
             ...formData,
-            // Convert single branch_id to array format expected by backend
-            branch_ids: formData.branch_id
-                ? [parseInt(formData.branch_id)]
-                : [],
+            branch_id: formData.branch_id
+                ? parseInt(formData.branch_id, 10)
+                : null,
         };
 
         if (!isBusinessman) {
             delete payload.business_id;
+        }
+
+        if (isSmallBusinessOwner) {
+            delete payload.branch_id;
         }
 
         router.post('/employees', payload, {
@@ -101,7 +104,7 @@ export default function EmployeeCreate({
                     Tambahkan data karyawan baru ke sistem
                 </p>
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
                         <FormInput
                             name="name"
                             label="Nama Lengkap"
@@ -109,22 +112,111 @@ export default function EmployeeCreate({
                             onChange={handleChange}
                             error={errors.name}
                             placeholder="Masukkan nama lengkap"
-                            required
                             icon={<User className="h-5 w-5" />}
                         />
 
                         <FormInput
-                            name="email"
-                            label="Email"
-                            type="email"
-                            value={formData.email}
+                            name="phone"
+                            label="Nomor Telepon"
+                            value={formData.phone}
                             onChange={handleChange}
-                            error={errors.email}
-                            placeholder="Masukkan alamat email"
-                            required
+                            error={errors.phone}
+                            placeholder="Masukkan nomor telepon"
                             icon={<User className="h-5 w-5" />}
                         />
 
+                        <FormInput
+                            name="position"
+                            label="Jabatan"
+                            value={formData.position}
+                            onChange={handleChange}
+                            error={errors.position}
+                            placeholder="Masukkan jabatan"
+                            icon={<User className="h-5 w-5" />}
+                        />
+                    </div>
+
+                    <FormTextArea
+                        name="address"
+                        label="Alamat"
+                        value={formData.address}
+                        onChange={handleChange}
+                        error={errors.address}
+                        placeholder="Masukkan alamat lengkap"
+                        rows={3}
+                    />
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        {isBusinessman && (
+                            <FormSelect
+                                name="business_id"
+                                label="Bisnis"
+                                value={formData.business_id}
+                                onChange={handleBusinessChange}
+                                options={businesses.map((business) => ({
+                                    value: business.id,
+                                    label: business.name,
+                                }))}
+                                placeholder="Pilih bisnis"
+                                error={errors.business_id}
+                                icon={<Building2 className="h-5 w-5" />}
+                            />
+                        )}
+
+                        {isSmallBusinessOwner ? (
+                            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200 sm:col-span-2">
+                                Karyawan baru akan otomatis ditempatkan pada
+                                cabang
+                                {branches.length > 0
+                                    ? ` "${branches[0].name}"`
+                                    : ''}
+                                .
+                            </div>
+                        ) : (
+                            <FormSelect
+                                name="branch_id"
+                                label="Cabang"
+                                value={formData.branch_id}
+                                onChange={handleChange}
+                                options={
+                                    isBusinessman
+                                        ? branches
+                                              .filter(
+                                                  (branch) =>
+                                                      String(
+                                                          branch.business_id,
+                                                      ) ===
+                                                      String(
+                                                          formData.business_id,
+                                                      ),
+                                              )
+                                              .map((branch) => ({
+                                                  value: branch.id,
+                                                  label: branch.name,
+                                              }))
+                                        : branches.map((branch) => ({
+                                              value: branch.id,
+                                              label: branch.name,
+                                          }))
+                                }
+                                placeholder="Pilih cabang"
+                                error={errors.branch_id}
+                            />
+                        )}
+                    </div>
+
+                    <FormInput
+                        name="email"
+                        label="Email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        error={errors.email}
+                        placeholder="Masukkan alamat email"
+                        icon={<User className="h-5 w-5" />}
+                    />
+
+                    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                         <FormInput
                             name="password"
                             label="Kata Sandi"
@@ -133,7 +225,6 @@ export default function EmployeeCreate({
                             onChange={handleChange}
                             error={errors.password}
                             placeholder="Masukkan kata sandi"
-                            required
                             icon={
                                 showPassword ? (
                                     <EyeOff className="h-5 w-5" />
@@ -166,7 +257,6 @@ export default function EmployeeCreate({
                             onChange={handleChange}
                             error={errors.password_confirmation}
                             placeholder="Ulangi kata sandi"
-                            required
                             icon={
                                 showPassword ? (
                                     <EyeOff className="h-5 w-5" />
@@ -175,94 +265,7 @@ export default function EmployeeCreate({
                                 )
                             }
                         />
-
-                        <FormInput
-                            name="phone"
-                            label="Nomor Telepon"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            error={errors.phone}
-                            placeholder="Masukkan nomor telepon"
-                            required
-                            icon={<User className="h-5 w-5" />}
-                        />
-
-                        <FormInput
-                            name="position"
-                            label="Jabatan"
-                            value={formData.position}
-                            onChange={handleChange}
-                            error={errors.position}
-                            placeholder="Masukkan jabatan"
-                            required
-                            icon={<User className="h-5 w-5" />}
-                        />
                     </div>
-
-                    <FormTextArea
-                        name="address"
-                        label="Alamat"
-                        value={formData.address}
-                        onChange={handleChange}
-                        error={errors.address}
-                        placeholder="Masukkan alamat lengkap"
-                        required
-                        rows={3}
-                    />
-
-                    {isBusinessman && (
-                        <FormSelect
-                            name="business_id"
-                            label="Bisnis"
-                            value={formData.business_id}
-                            onChange={handleBusinessChange}
-                            options={businesses.map((business) => ({
-                                value: business.id,
-                                label: business.name,
-                            }))}
-                            placeholder="Pilih bisnis"
-                            error={errors.business_id}
-                            icon={<Building2 className="h-5 w-5" />}
-                            required
-                        />
-                    )}
-
-                    {isSmallBusinessOwner ? (
-                        <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
-                            Karyawan baru akan otomatis ditempatkan pada cabang
-                            {branches.length > 0
-                                ? ` "${branches[0].name}"`
-                                : ''}
-                            .
-                        </div>
-                    ) : (
-                        <FormSelect
-                            name="branch_id"
-                            label="Cabang"
-                            value={formData.branch_id}
-                            onChange={handleChange}
-                            options={
-                                isBusinessman
-                                    ? branches
-                                          .filter(
-                                              (branch) =>
-                                                  String(branch.business_id) ===
-                                                  String(formData.business_id),
-                                          )
-                                          .map((branch) => ({
-                                              value: branch.id,
-                                              label: branch.name,
-                                          }))
-                                    : branches.map((branch) => ({
-                                          value: branch.id,
-                                          label: branch.name,
-                                      }))
-                            }
-                            placeholder="Pilih cabang"
-                            error={errors.branch_id}
-                            required
-                        />
-                    )}
 
                     <Button
                         icon={<Save className="size-4" />}

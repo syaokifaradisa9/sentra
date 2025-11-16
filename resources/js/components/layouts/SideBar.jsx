@@ -29,6 +29,7 @@ const ROLE_PERMISSIONS = {
         'categories',
         'products',
         'promos',
+        'employees',
     ],
     Manager: ['dashboard', 'cashier', 'categories', 'products', 'promos'],
     Cashier: ['dashboard', 'cashier', 'categories', 'products', 'promos'],

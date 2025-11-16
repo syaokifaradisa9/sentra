@@ -46,17 +46,17 @@ class EmployeeService
     public function store(EmployeeDTO $dto, int $currentUserId): User
     {
         return DB::transaction(function () use ($dto, $currentUserId) {
-            $branchIds = $this->resolveBranchIds($currentUserId, $dto);
+            $branchId = $this->resolveBranchId($currentUserId, $dto);
 
-            if (empty($branchIds)) {
+            if (! $branchId) {
                 throw ValidationException::withMessages([
-                    'branch_ids' => 'Cabang yang dipilih tidak valid.',
+                    'branch_id' => 'Cabang yang dipilih tidak valid.',
                 ]);
             }
 
             $user = $this->userRepository->store($dto->toArrayWithPassword());
 
-            $this->syncUserBranches($user->id, $branchIds);
+            $this->assignUserBranch($user->id, $branchId);
 
             return $user->load('branches');
         });
@@ -75,15 +75,15 @@ class EmployeeService
                 $this->userRepository->updatePassword($user, $dto->password);
             }
 
-            $branchIds = $this->resolveBranchIds($currentUserId, $dto);
+            $branchId = $this->resolveBranchId($currentUserId, $dto);
 
-            if (empty($branchIds)) {
+            if (! $branchId) {
                 throw ValidationException::withMessages([
-                    'branch_ids' => 'Cabang yang dipilih tidak valid.',
+                    'branch_id' => 'Cabang yang dipilih tidak valid.',
                 ]);
             }
 
-            $this->syncUserBranches($id, $branchIds);
+            $this->assignUserBranch($id, $branchId);
 
             return $user->load('branches');
         });
@@ -197,27 +197,9 @@ class EmployeeService
         return $query->with(['branches', 'roles'])->get();
     }
 
-    private function syncUserBranches(int $userId, array $branchIds): void
+    private function assignUserBranch(int $userId, int $branchId): void
     {
-        $branchIds = array_unique(array_map('intval', $branchIds));
-
-        $this->userBranchRepository->deleteByUserId($userId);
-
-        if (empty($branchIds)) {
-            return;
-        }
-
-        $timestamp = now();
-        $payload = array_map(static function (int $branchId) use ($userId, $timestamp) {
-            return [
-                'user_id' => $userId,
-                'branch_id' => $branchId,
-                'created_at' => $timestamp,
-                'updated_at' => $timestamp,
-            ];
-        }, $branchIds);
-
-        $this->userBranchRepository->batchInsert($payload);
+        $this->userBranchRepository->assignBranch($userId, $branchId);
     }
 
     private function buildUserQueryForRole(int $userId): Builder
@@ -249,17 +231,17 @@ class EmployeeService
         return $query->whereRaw('1 = 0');
     }
 
-    private function resolveBranchIds(int $currentUserId, EmployeeDTO $dto): array
+    private function resolveBranchId(int $currentUserId, EmployeeDTO $dto): ?int
     {
         $currentUser = $this->getCurrentUser($currentUserId);
 
         if (! $currentUser) {
-            return [];
+            return null;
         }
 
         if ($currentUser->hasRole('Businessman')) {
-            if (! $dto->businessId) {
-                return [];
+            if (! $dto->businessId || ! $dto->branchId) {
+                return null;
             }
 
             $allowedBranchIds = $this->branchRepository
@@ -268,25 +250,25 @@ class EmployeeService
                 ->map(static fn ($id) => (int) $id)
                 ->all();
 
-            return collect($dto->branchIds)
-                ->map(static fn ($id) => (int) $id)
-                ->filter(static fn ($id) => in_array($id, $allowedBranchIds, true))
-                ->values()
-                ->all();
+            return in_array($dto->branchId, $allowedBranchIds, true)
+                ? $dto->branchId
+                : null;
         }
 
         if ($currentUser->hasRole('BusinessOwner')) {
+            if (! $dto->branchId) {
+                return null;
+            }
+
             $allowedBranchIds = $this->branchRepository
                 ->getByOwnerId($currentUserId)
                 ->pluck('id')
                 ->map(static fn ($id) => (int) $id)
                 ->all();
 
-            return collect($dto->branchIds)
-                ->map(static fn ($id) => (int) $id)
-                ->filter(static fn ($id) => in_array($id, $allowedBranchIds, true))
-                ->values()
-                ->all();
+            return in_array($dto->branchId, $allowedBranchIds, true)
+                ? $dto->branchId
+                : null;
         }
 
         if ($currentUser->hasRole('SmallBusinessOwner')) {
@@ -297,10 +279,10 @@ class EmployeeService
                 ->values()
                 ->all();
 
-            return array_slice($ownerBranchIds, 0, 1);
+            return $ownerBranchIds[0] ?? null;
         }
 
-        return [];
+        return null;
     }
 
     private function getCurrentUser(int $userId): ?User
