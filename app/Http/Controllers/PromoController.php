@@ -6,6 +6,7 @@ use App\DataTransferObjects\PromoDTO;
 use App\Datatables\PromoDatatableService;
 use App\Http\Requests\Common\DatatableRequest;
 use App\Http\Requests\PromoRequest;
+use App\Models\User;
 use App\Services\BranchService;
 use App\Services\BusinessService;
 use App\Services\ProductService;
@@ -19,7 +20,7 @@ use Throwable;
 
 class PromoController extends Controller
 {
-    private $loggedUser;
+    private ?User $loggedUser = null;
 
     public function __construct(
         private PromoService $promoService,
@@ -28,7 +29,11 @@ class PromoController extends Controller
         private BranchService $branchService,
         private ProductService $productService,
     ) {
-        $this->loggedUser = Auth::user();
+        $this->middleware(function ($request, $next) {
+            $this->loggedUser = $request->user();
+
+            return $next($request);
+        });
     }
 
     public function index(): InertiaResponse
