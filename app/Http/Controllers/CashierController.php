@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\DataTransferObjects\TransactionDTO;
+use App\Http\Requests\StoreTransactionRequest;
 use App\Models\User;
 use App\Services\BranchService;
 use App\Services\CategoryService;
 use App\Services\ProductService;
+use App\Services\TransactionService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -16,6 +20,7 @@ class CashierController extends Controller
         private ProductService $productService,
         private CategoryService $categoryService,
         private BranchService $branchService,
+        private TransactionService $transactionService,
     ) {}
 
     public function index(Request $request): InertiaResponse
@@ -82,6 +87,25 @@ class CashierController extends Controller
             ] : null,
             'currentRole' => $role,
         ]);
+    }
+
+    public function store(StoreTransactionRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $branchId = (int) $request->input('branch_id');
+        $accessibleBranchIds = $this->branchService->getBranchIdsForUser($user->id);
+
+        abort_unless(in_array($branchId, $accessibleBranchIds, true), 403);
+
+        $dto = TransactionDTO::fromArray($request->validated(), $user->id);
+        $result = $this->transactionService->create($dto);
+
+        return response()->json([
+            'message' => 'Transaksi berhasil disimpan.',
+            'change_amount' => $result['change_amount'],
+            'transaction_number' => $result['transaction']->transaction_number,
+        ], 201);
     }
 
     private function determineSelectedBranchId(Request $request, string $role, array $branchIds): ?int

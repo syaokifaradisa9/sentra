@@ -233,17 +233,14 @@ export default function ProductIndex() {
             <ContentCard
                 title="Data Produk"
                 additionalButton={
-                    <CheckRoles
-                        roles={['Businessman', 'BusinessOwner']}
-                        children={
-                            <Button
-                                className="w-full"
-                                label="Tambah Produk"
-                                href="/products/create"
-                                icon={<Plus className="size-4" />}
-                            />
-                        }
-                    />
+                    <CheckRoles notRoles={['Manager', 'Cashier']}>
+                        <Button
+                            className="w-full"
+                            label="Tambah Produk"
+                            href="/products/create"
+                            icon={<Plus className="size-4" />}
+                        />
+                    </CheckRoles>
                 }
             >
                 <DataTable
@@ -311,7 +308,7 @@ export default function ProductIndex() {
                             ),
                         },
                         {
-                            roles: ['Businessman', 'BusinessOwner'],
+                            notroles: ['Manager', 'Cashier'],
                             header: 'Cabang',
                             render: (item) => (
                                 <span className="text-slate-600 dark:text-slate-300">
@@ -328,7 +325,7 @@ export default function ProductIndex() {
                             ),
                         },
                         {
-                            roles: ['Businessman', 'BusinessOwner'],
+                            notroles: ['Manager', 'Cashier'],
                             header: 'Aksi',
                             render: (item) => (
                                 <div className="flex items-center justify-end gap-3">

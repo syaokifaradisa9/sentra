@@ -49,13 +49,13 @@ export default function RootLayout({ title, children }) {
                     toggleTheme={toggleTheme}
                 />
 
-                <div className="flex flex-1 pt-16">
+                <div className="flex flex-1 min-h-0 pt-16">
                     <SideBar
                         isOpen={isSidebarOpen}
                         setIsOpen={setSidebarOpen}
                     />
-                    <main className="flex flex-1 flex-col overflow-hidden p-4 transition-all duration-300 md:p-6 lg:p-8 lg:pl-[calc(theme(spacing.8)+256px)]">
-                        <div className="mx-auto flex w-full max-w-[1920px] flex-1 flex-col space-y-6">
+                    <main className="flex flex-1 min-h-0 flex-col overflow-y-auto overflow-x-hidden p-4 transition-all duration-300 scrollbar-elegant md:p-6 lg:p-8 lg:pl-[calc(theme(spacing.8)+256px)]">
+                        <div className="mx-auto flex w-full max-w-[1920px] flex-1 min-h-0 flex-col space-y-6">
                             {children}
                         </div>
                     </main>

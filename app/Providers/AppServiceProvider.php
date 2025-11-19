@@ -19,6 +19,10 @@ use App\Repositories\ProductBranch\ProductBranchRepository;
 use App\Repositories\ProductBranch\EloquentProductBranchRepository;
 use App\Repositories\BranchEmployee\BranchEmployeeRepository;
 use App\Repositories\BranchEmployee\EloquentBranchEmployeeRepository;
+use App\Repositories\Transaction\TransactionRepository;
+use App\Repositories\Transaction\EloquentTransactionRepository;
+use App\Repositories\ProductTransaction\ProductTransactionRepository;
+use App\Repositories\ProductTransaction\EloquentProductTransactionRepository;
 use App\Repositories\Promo\PromoRepository;
 use App\Repositories\Promo\EloquentPromoRepository;
 use App\Repositories\PromoPriceHistory\PromoPriceHistoryRepository;
@@ -54,6 +58,12 @@ class AppServiceProvider extends ServiceProvider
         
         // BranchEmployee Repository
         $this->app->singleton(BranchEmployeeRepository::class, EloquentBranchEmployeeRepository::class);
+
+        // Transaction Repository
+        $this->app->singleton(TransactionRepository::class, EloquentTransactionRepository::class);
+
+        // Product Transaction Repository
+        $this->app->singleton(ProductTransactionRepository::class, EloquentProductTransactionRepository::class);
 
         // Promo Repository
         $this->app->singleton(PromoRepository::class, EloquentPromoRepository::class);

@@ -1,6 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
 import {
-    ChevronLeft,
     Download,
     LayoutGrid,
     List,
@@ -30,8 +29,7 @@ export default function CashierIndex({
 }) {
     const { loggeduser } = usePage().props;
     const displayName = loggeduser?.name ?? 'Pengguna';
-    const displayPosition =
-        loggeduser?.position ?? loggeduser?.role ?? 'Kasir';
+    const displayPosition = loggeduser?.position ?? loggeduser?.role ?? 'Kasir';
     const branchOptions = branchOptionsProp ?? [];
 
     const [selectedCategory, setSelectedCategory] = useState('all');
@@ -54,6 +52,13 @@ export default function CashierIndex({
     const [saveDraftName, setSaveDraftName] = useState('');
     const [productListOffset, setProductListOffset] = useState(0);
     const [isCategoryCollapsed, setIsCategoryCollapsed] = useState(false);
+    const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [checkoutError, setCheckoutError] = useState('');
+    const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
+    const [checkoutResult, setCheckoutResult] = useState(null);
     const [theme, setTheme] = useState(() => {
         if (typeof window === 'undefined') {
             return 'dark';
@@ -293,6 +298,10 @@ export default function CashierIndex({
                     photo_url: product.photo_url,
                     price: product.price,
                     quantity: 1,
+                    category_name: product.category_name ?? null,
+                    promo_id: product.promo_id ?? null,
+                    discount_percent: product.discount_percent ?? null,
+                    discount_price: product.discount_price ?? null,
                 },
             ];
         });
@@ -406,6 +415,119 @@ export default function CashierIndex({
         setIsLoadModalOpen(true);
     };
 
+    const handleOpenCheckoutModal = () => {
+        if (orders.length === 0) {
+            setOrderFeedback('Belum ada pesanan untuk diproses.');
+            return;
+        }
+        setCheckoutError('');
+        setCheckoutResult(null);
+        setIsCheckoutModalOpen(true);
+    };
+
+    const handleCloseCheckoutModal = () => {
+        if (isSubmittingCheckout) {
+            return;
+        }
+        setIsCheckoutModalOpen(false);
+        setCheckoutError('');
+        setCheckoutResult(null);
+        setPaymentAmount('');
+        setCustomerName('');
+        setCustomerPhone('');
+    };
+
+    const handleSubmitCheckout = async () => {
+        if (!branchFilter) {
+            setCheckoutError('Pilih cabang terlebih dahulu.');
+            return;
+        }
+
+        const payment = Number(paymentAmount);
+        if (Number.isNaN(payment) || payment <= 0) {
+            setCheckoutError('Masukkan jumlah pembayaran yang valid.');
+            return;
+        }
+
+        const amountDue = total > 0 ? total : 0;
+        if (payment < amountDue) {
+            setCheckoutError('Jumlah pembayaran kurang dari total belanja.');
+            return;
+        }
+
+        const csrfToken =
+            typeof document !== 'undefined'
+                ? document
+                      .querySelector('meta[name="csrf-token"]')
+                      ?.getAttribute('content')
+                : null;
+
+        const payload = {
+            customer_name: customerName || null,
+            customer_phone: customerPhone || null,
+            branch_id: Number(branchFilter),
+            discount_type: discount.type ?? null,
+            discount_value:
+                discount.type && discount.value !== undefined
+                    ? Number(discount.value || 0)
+                    : null,
+            payment_amount: payment,
+            items: orders.map((order) => ({
+                product_id: order.id,
+                product_name: order.name,
+                category_name: order.category_name ?? null,
+                price: order.price,
+                quantity: order.quantity,
+                promo_id: order.promo_id ?? null,
+                discount_percent: order.discount_percent ?? null,
+                discount_price: order.discount_price ?? null,
+            })),
+        };
+
+        setIsSubmittingCheckout(true);
+        try {
+            const response = await fetch('/cashier/store', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken ?? '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message ?? 'Gagal menyimpan transaksi.');
+            }
+
+            setCheckoutResult({
+                change: data.change_amount ?? 0,
+                transactionNumber: data.transaction_number ?? '-',
+            });
+            setOrderFeedback('Transaksi berhasil disimpan.');
+            setOrders([]);
+            setDiscount({ type: 'amount', value: 0 });
+            setDiscountDraft({ type: 'amount', value: '0' });
+            setPaymentAmount('');
+            setCustomerName('');
+            setCustomerPhone('');
+            setSavedOrders([]);
+            setHasSavedOrder(false);
+        } catch (error) {
+            setCheckoutError(
+                error instanceof Error
+                    ? error.message
+                    : 'Terjadi kesalahan saat menyimpan transaksi.',
+            );
+        } finally {
+            setIsSubmittingCheckout(false);
+        }
+    };
+
     const handleLoadSavedOrder = (orderId) => {
         const target = savedOrders.find((item) => item.id === orderId);
         if (!target) {
@@ -492,132 +614,62 @@ export default function CashierIndex({
     return (
         <>
             <CashierLayout title="Kasir">
-                <div className="mx-auto flex h-full w-full max-w-none flex-1 flex-col overflow-hidden px-2 pt-2 pb-0 sm:px-2 lg:px-3">
+                <main className="flex h-[100dvh] flex-col overflow-hidden bg-slate-50 transition-colors duration-300 dark:bg-slate-950">
+                    {/* Background Pattern */}
                     <div
-                        className={`grid flex-1 gap-3 overflow-visible pb-20 lg:min-h-0 ${
-                            isCategoryCollapsed
-                                ? 'lg:grid-cols-[3rem_minmax(0,1fr)_24rem]'
-                                : 'lg:grid-cols-[16rem_minmax(0,1fr)_24rem]'
-                        } lg:pb-0`}
-                    >
-                        <aside className="hidden h-full min-h-0 lg:flex lg:pt-4">
-                            <CategorySection
-                                categoryOptions={categoryOptions}
+                        className="pointer-events-none absolute inset-0 opacity-[0.03] dark:opacity-[0.05]"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                        }}
+                    />
+
+                    <div className="relative z-10 mx-auto flex h-full w-full max-w-[1920px] flex-1 flex-col overflow-hidden p-2 sm:p-3 lg:p-4">
+                        <div
+                            className={`grid flex-1 gap-4 overflow-visible pb-20 lg:min-h-0 ${
+                                isCategoryCollapsed
+                                    ? 'lg:grid-cols-[4rem_minmax(0,1fr)_22rem]'
+                                    : 'lg:grid-cols-[17rem_minmax(0,1fr)_22rem]'
+                            } transition-all duration-300 ease-in-out lg:pb-0`}
+                        >
+                            <aside className="hidden h-full min-h-0 flex-col lg:flex">
+                                <CategorySection
+                                    categoryOptions={categoryOptions}
+                                    selectedCategory={selectedCategory}
+                                    setSelectedCategory={setSelectedCategory}
+                                    handleBack={handleBack}
+                                    userName={displayName}
+                                    userPosition={displayPosition}
+                                    productListOffset={productListOffset}
+                                    isCollapsed={isCategoryCollapsed}
+                                    onToggleCollapse={setIsCategoryCollapsed}
+                                />
+                            </aside>
+
+                            <ProductSection
+                                products={products}
                                 selectedCategory={selectedCategory}
                                 setSelectedCategory={setSelectedCategory}
-                                handleBack={handleBack}
+                                search={search}
+                                setSearch={setSearch}
+                                viewMode={viewMode}
+                                setViewMode={setViewMode}
+                                handleAddProduct={handleAddProduct}
+                                orderQuantities={orderQuantities}
+                                categoryOptions={categoryOptions}
+                                theme={theme}
+                                toggleTheme={toggleTheme}
+                                onProductListOffsetChange={setProductListOffset}
                                 userName={displayName}
                                 userPosition={displayPosition}
-                                productListOffset={productListOffset}
-                                isCollapsed={isCategoryCollapsed}
-                                onToggleCollapse={setIsCategoryCollapsed}
+                                handleBack={() => window.history.back()}
+                                branchOptions={branchOptions}
+                                selectedBranchId={branchFilter}
+                                canSelectBranch={canSelectBranch}
+                                onBranchChange={handleBranchChange}
                             />
-                        </aside>
 
-                        <ProductSection
-                            products={products}
-                            selectedCategory={selectedCategory}
-                            setSelectedCategory={setSelectedCategory}
-                            search={search}
-                            setSearch={setSearch}
-                            viewMode={viewMode}
-                            setViewMode={setViewMode}
-                            handleAddProduct={handleAddProduct}
-                            orderQuantities={orderQuantities}
-                            categoryOptions={categoryOptions}
-                            theme={theme}
-                            toggleTheme={toggleTheme}
-                            onProductListOffsetChange={setProductListOffset}
-                        />
-
-                        <aside className="hidden h-full min-h-0 lg:block lg:pt-4">
-                            <div className="lg:sticky lg:top-4">
-                                <SummarySection
-                                    orders={orders}
-                                    subtotal={subtotal}
-                                    discountAmount={discountAmount}
-                                    discount={discount}
-                                    total={total}
-                                    onIncrease={handleIncreaseQuantity}
-                                    onDecrease={handleDecreaseQuantity}
-                                    onRemove={handleRemoveOrderItem}
-                                    onDiscountClick={handleOpenDiscountModal}
-                                    onSaveOrder={handleSaveOrder}
-                                    onLoadOrder={handleLoadOrder}
-                                    canLoadSaved={hasSavedOrder}
-                                    feedbackMessage={orderFeedback}
-                                    branchOptions={branchOptions}
-                                    canSelectBranch={canSelectBranch}
-                                    selectedBranchId={branchFilter}
-                                    onBranchChange={handleBranchChange}
-                                    activeBranch={activeBranch}
-                                />
-                            </div>
-                        </aside>
-                    </div>
-
-                    {/* Mobile Fixed Total Price Button */}
-                    <div className="fixed right-0 bottom-0 left-0 z-10 border-t border-slate-200 bg-white/90 p-3 backdrop-blur-sm lg:hidden dark:border-slate-700 dark:bg-slate-900/80">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setShowBottomSheet(true);
-                                setTimeout(() => setIsSummaryOpen(true), 10);
-                            }}
-                            className="flex w-full items-center justify-between rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary shadow-sm transition hover:bg-primary/20 dark:border-teal-400/30 dark:bg-teal-400/10 dark:text-teal-300 dark:hover:bg-teal-400/20"
-                        >
-                            <div className="flex items-center gap-2">
-                                <span>Daftar Pesanan</span>
-                                <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-white dark:bg-teal-500 dark:text-white">
-                                    {orders.length}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-base font-bold text-slate-700 dark:text-slate-200">
-                                    {formatCurrency(total)}
-                                </span>
-                                <MoreHorizontal className="h-5 w-5" />
-                            </div>
-                        </button>
-                    </div>
-
-                    {/* Mobile Order Summary Bottom Sheet */}
-                    {showBottomSheet && (
-                        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm lg:hidden">
-                            <div
-                                className="absolute inset-0"
-                                onClick={() => {
-                                    setIsSummaryOpen(false);
-                                    setTimeout(
-                                        () => setShowBottomSheet(false),
-                                        300,
-                                    );
-                                }}
-                            ></div>
-                            <div
-                                className={`absolute right-0 bottom-0 left-0 flex max-h-[70vh] flex-col rounded-t-3xl bg-white shadow-lg transition-transform duration-300 ease-out dark:bg-slate-900 ${isSummaryOpen ? 'translate-y-0' : 'translate-y-full'}`}
-                            >
-                                <div className="mx-auto my-2 h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-600"></div>
-                                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-700">
-                                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                                        Daftar Pesanan
-                                    </h3>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setIsSummaryOpen(false);
-                                            setTimeout(
-                                                () => setShowBottomSheet(false),
-                                                300,
-                                            );
-                                        }}
-                                        className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                                        aria-label="Tutup"
-                                    >
-                                        <X className="h-5 w-5" />
-                                    </button>
-                                </div>
-                                <div className="flex-1 overflow-y-auto px-5 py-3">
+                            <aside className="hidden h-full min-h-0 lg:block">
+                                <div className="h-full">
                                     <SummarySection
                                         orders={orders}
                                         subtotal={subtotal}
@@ -634,12 +686,164 @@ export default function CashierIndex({
                                         onLoadOrder={handleLoadOrder}
                                         canLoadSaved={hasSavedOrder}
                                         feedbackMessage={orderFeedback}
+                                        branchOptions={branchOptions}
+                                        canSelectBranch={canSelectBranch}
+                                        selectedBranchId={branchFilter}
+                                        onBranchChange={handleBranchChange}
+                                        activeBranch={activeBranch}
+                                        onCheckout={handleOpenCheckoutModal}
+                                        disableCheckout={isSubmittingCheckout}
                                     />
                                 </div>
+                            </aside>
+                        </div>
+
+                        {/* Mobile Fixed Total Price Button & Categories */}
+                        <div className="fixed right-0 bottom-0 left-0 z-30 flex flex-col gap-2 border-t border-slate-200 bg-white/95 pt-2 pb-3 backdrop-blur-md lg:hidden dark:border-slate-800 dark:bg-slate-900/95">
+                            {/* Mobile Category Tabs */}
+                            <div className="scrollbar-hide flex w-full gap-6 overflow-x-auto px-6 pb-2">
+                                {[
+                                    {
+                                        id: 'all',
+                                        name: 'Semua',
+                                        product_count: totalProducts,
+                                    },
+                                    ...categories,
+                                ].map((category) => {
+                                    const isActive =
+                                        String(selectedCategory) ===
+                                        String(category.id);
+                                    return (
+                                        <button
+                                            key={category.id}
+                                            onClick={() =>
+                                                setSelectedCategory(category.id)
+                                            }
+                                            className={`group relative flex flex-shrink-0 flex-col items-center justify-center pb-1 text-sm whitespace-nowrap transition-all ${
+                                                isActive
+                                                    ? 'font-bold text-primary dark:text-teal-400'
+                                                    : 'font-medium text-slate-500 dark:text-slate-400'
+                                            }`}
+                                        >
+                                            <span className="flex items-center gap-1.5">
+                                                {category.name}
+                                                <span
+                                                    className={`flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] ${
+                                                        isActive
+                                                            ? 'bg-primary/10 text-primary dark:bg-teal-400/10 dark:text-teal-400'
+                                                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+                                                    }`}
+                                                >
+                                                    {category.product_count}
+                                                </span>
+                                            </span>
+                                            {isActive && (
+                                                <span className="absolute -bottom-2 h-0.5 w-full rounded-t-full bg-primary dark:bg-teal-400" />
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="px-3">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowBottomSheet(true);
+                                        setTimeout(
+                                            () => setIsSummaryOpen(true),
+                                            50,
+                                        );
+                                    }}
+                                    className="flex w-full items-center justify-between rounded-2xl bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all active:scale-[0.98] dark:bg-teal-500 dark:shadow-teal-500/20"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs">
+                                            {orders.length}
+                                        </div>
+                                        <span>Lihat Pesanan</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-base">
+                                            {formatCurrency(total)}
+                                        </span>
+                                        <MoreHorizontal className="h-5 w-5" />
+                                    </div>
+                                </button>
                             </div>
                         </div>
-                    )}
-                </div>
+
+                        {/* Mobile Order Summary Bottom Sheet */}
+                        {showBottomSheet && (
+                            <div className="fixed inset-0 z-50 lg:hidden">
+                                <div
+                                    className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                                    onClick={() => {
+                                        setIsSummaryOpen(false);
+                                        setTimeout(
+                                            () => setShowBottomSheet(false),
+                                            300,
+                                        );
+                                    }}
+                                ></div>
+                                <div
+                                    className={`absolute right-0 bottom-0 left-0 flex h-[85vh] flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-slate-900 ${isSummaryOpen ? 'translate-y-0' : 'translate-y-full'}`}
+                                >
+                                    <div className="mx-auto my-3 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                                    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-2 dark:border-slate-800">
+                                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                            Detail Pesanan
+                                        </h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsSummaryOpen(false);
+                                                setTimeout(
+                                                    () =>
+                                                        setShowBottomSheet(
+                                                            false,
+                                                        ),
+                                                    300,
+                                                );
+                                            }}
+                                            className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                                        >
+                                            <X className="h-6 w-6" />
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-hidden p-4">
+                                        <SummarySection
+                                            orders={orders}
+                                            subtotal={subtotal}
+                                            discountAmount={discountAmount}
+                                            discount={discount}
+                                            total={total}
+                                            onIncrease={handleIncreaseQuantity}
+                                            onDecrease={handleDecreaseQuantity}
+                                            onRemove={handleRemoveOrderItem}
+                                            onDiscountClick={
+                                                handleOpenDiscountModal
+                                            }
+                                            onSaveOrder={handleSaveOrder}
+                                            onLoadOrder={handleLoadOrder}
+                                            canLoadSaved={hasSavedOrder}
+                                            feedbackMessage={orderFeedback}
+                                            branchOptions={branchOptions}
+                                            canSelectBranch={canSelectBranch}
+                                            selectedBranchId={branchFilter}
+                                            onBranchChange={handleBranchChange}
+                                            activeBranch={activeBranch}
+                                            onCheckout={handleOpenCheckoutModal}
+                                            disableCheckout={
+                                                isSubmittingCheckout
+                                            }
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </main>
             </CashierLayout>
             {isDiscountModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-6 backdrop-blur-sm">
@@ -801,6 +1005,148 @@ export default function CashierIndex({
                                 </button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {isCheckoutModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-6 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/95 p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900/90">
+                        <div className="mb-4 flex items-start justify-between">
+                            <div>
+                                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                                    {checkoutResult
+                                        ? 'Pembayaran Berhasil'
+                                        : 'Konfirmasi Pembayaran'}
+                                </h2>
+                                {!checkoutResult && (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                                        Masukkan informasi pelanggan dan jumlah
+                                        pembayaran.
+                                    </p>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleCloseCheckoutModal}
+                                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                                aria-label="Tutup modal pembayaran"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {checkoutResult ? (
+                            <div className="space-y-4">
+                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-600 dark:bg-slate-800">
+                                    <p className="text-slate-500 dark:text-slate-400">
+                                        Nomor Transaksi
+                                    </p>
+                                    <p className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                                        {checkoutResult.transactionNumber}
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/40 dark:bg-emerald-400/10 dark:text-emerald-200">
+                                    <p className="text-xs tracking-wide uppercase">
+                                        Jumlah Kembalian
+                                    </p>
+                                    <p className="text-2xl font-semibold">
+                                        {formatCurrency(
+                                            checkoutResult.change ?? 0,
+                                        )}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleCloseCheckoutModal}
+                                    className="v mt-2 inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary/90"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                                        Nama Pelanggan (opsional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customerName}
+                                        onChange={(event) =>
+                                            setCustomerName(event.target.value)
+                                        }
+                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-300/30"
+                                        placeholder="Masukkan nama pelanggan"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                                        Nomor Telepon (opsional)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={customerPhone}
+                                        onChange={(event) =>
+                                            setCustomerPhone(event.target.value)
+                                        }
+                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-300/30"
+                                        placeholder="Masukkan nomor telepon"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">
+                                        Jumlah Pembayaran
+                                    </label>
+                                    <input
+                                        type="number"
+                                        inputMode="decimal"
+                                        min="0"
+                                        value={paymentAmount}
+                                        onChange={(event) =>
+                                            setPaymentAmount(event.target.value)
+                                        }
+                                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-primary focus:ring-2 focus:ring-primary/30 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-400 dark:focus:ring-teal-300/30"
+                                        placeholder="Masukkan jumlah pembayaran"
+                                    />
+                                    <p className="mt-1 text-right text-xs text-slate-400 dark:text-slate-500">
+                                        Total harus dibayar:{' '}
+                                        <span className="font-semibold text-slate-600 dark:text-slate-300">
+                                            {formatCurrency(total)}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                {checkoutError && (
+                                    <p className="text-sm text-red-500 dark:text-red-400">
+                                        {checkoutError}
+                                    </p>
+                                )}
+
+                                <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                                    <button
+                                        type="button"
+                                        onClick={handleCloseCheckoutModal}
+                                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        disabled={isSubmittingCheckout}
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleSubmitCheckout}
+                                        disabled={isSubmittingCheckout}
+                                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:bg-slate-300 dark:disabled:bg-slate-700"
+                                    >
+                                        {isSubmittingCheckout
+                                            ? 'Memproses...'
+                                            : 'Bayar'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -1017,9 +1363,9 @@ export default function CashierIndex({
                                                             <Trash2 className="h-3.5 w-3.5" />
                                                             <span>Hapus</span>
                                                         </button>
-                                                   </div>
-                                               </div>
-                                           </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         );
                                     })}
                             </div>

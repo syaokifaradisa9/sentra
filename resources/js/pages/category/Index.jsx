@@ -210,17 +210,14 @@ export default function CategoryIndex() {
             <ContentCard
                 title="Data Kategori"
                 additionalButton={
-                    <CheckRoles
-                        roles={['Businessman', 'BusinessOwner']}
-                        children={
-                            <Button
-                                className="w-full"
-                                label="Tambah Kategori"
-                                href="/categories/create"
-                                icon={<Plus className="size-4" />}
-                            />
-                        }
-                    />
+                    <CheckRoles notRoles={['Manager', 'Cashier']}>
+                        <Button
+                            className="w-full"
+                            label="Tambah Kategori"
+                            href="/categories/create"
+                            icon={<Plus className="size-4" />}
+                        />
+                    </CheckRoles>
                 }
             >
                 <DataTable
@@ -300,7 +297,7 @@ export default function CategoryIndex() {
                             ),
                         },
                         {
-                            roles: ['Businessman', 'BusinessOwner'],
+                            notroles: ['Manager', 'Cashier'],
                             header: 'Aksi',
                             render: (item) => (
                                 <div className="flex items-center justify-end gap-3">

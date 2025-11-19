@@ -6,4 +6,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/cashier', [CashierController::class, 'index'])->name('cashier');
-
+Route::post('/cashier/store', [CashierController::class, 'store'])->name('cashier.store');
