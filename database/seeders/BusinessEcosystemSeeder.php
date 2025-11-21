@@ -327,6 +327,33 @@ class BusinessEcosystemSeeder extends Seeder
                 }
             }
         }
+
+        // Add 10 random products per branch
+        $faker = \Faker\Factory::create('id_ID');
+        $branches = Branch::where('owner_id', $businessman->id)->get();
+
+        foreach ($branches as $branch) {
+            // Ensure branch has categories
+            if ($branch->categories()->count() === 0) {
+                $generalCategory = Category::firstOrCreate(['name' => 'General']);
+                $branch->categories()->attach($generalCategory->id);
+            }
+
+            $branchCategories = $branch->categories;
+
+            for ($i = 0; $i < 10; $i++) {
+                $category = $branchCategories->random();
+
+                $product = Product::create([
+                    'name' => ucwords($faker->words(3, true)),
+                    'category_id' => $category->id,
+                    'price' => $faker->numberBetween(10, 500) * 1000,
+                    'description' => $faker->sentence(),
+                ]);
+
+                $product->branches()->attach($branch->id);
+            }
+        }
     }
 
     /**

@@ -77,8 +77,8 @@ export default function CashierIndex({
         selectedBranchId
             ? String(selectedBranchId)
             : branchOptions[0]?.id
-              ? String(branchOptions[0].id)
-              : '',
+                ? String(branchOptions[0].id)
+                : '',
     );
 
     useEffect(() => {
@@ -226,7 +226,7 @@ export default function CashierIndex({
                             : [],
                         discount:
                             parsed.discount &&
-                            typeof parsed.discount === 'object'
+                                typeof parsed.discount === 'object'
                                 ? parsed.discount
                                 : { type: 'amount', value: 0 },
                         savedAt: parsed.savedAt ?? new Date().toISOString(),
@@ -458,8 +458,8 @@ export default function CashierIndex({
         const csrfToken =
             typeof document !== 'undefined'
                 ? document
-                      .querySelector('meta[name="csrf-token"]')
-                      ?.getAttribute('content')
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute('content')
                 : null;
 
         const payload = {
@@ -597,11 +597,10 @@ export default function CashierIndex({
                         onClick={() => setViewMode(id)}
                         aria-pressed={isActive}
                         aria-label={`Tampilkan produk sebagai ${label.toLowerCase()}`}
-                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 transition ${
-                            isActive
+                        className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 transition ${isActive
                                 ? 'bg-primary text-white shadow-sm'
                                 : 'text-slate-500 hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
-                        }`}
+                            }`}
                         title={`Tampilan ${label}`}
                     >
                         <Icon className="h-4 w-4" />
@@ -625,11 +624,10 @@ export default function CashierIndex({
 
                     <div className="relative z-10 mx-auto flex h-full w-full max-w-[1920px] flex-1 flex-col overflow-hidden p-2 sm:p-3 lg:p-4">
                         <div
-                            className={`grid flex-1 gap-4 overflow-visible pb-20 lg:min-h-0 ${
-                                isCategoryCollapsed
+                            className={`grid flex-1 gap-4 min-h-0 overflow-hidden pb-20 lg:grid-rows-[minmax(0,1fr)] ${isCategoryCollapsed
                                     ? 'lg:grid-cols-[4rem_minmax(0,1fr)_22rem]'
                                     : 'lg:grid-cols-[17rem_minmax(0,1fr)_22rem]'
-                            } transition-all duration-300 ease-in-out lg:pb-0`}
+                                } transition-all duration-300 ease-in-out lg:pb-0`}
                         >
                             <aside className="hidden h-full min-h-0 flex-col lg:flex">
                                 <CategorySection
@@ -719,20 +717,18 @@ export default function CashierIndex({
                                             onClick={() =>
                                                 setSelectedCategory(category.id)
                                             }
-                                            className={`group relative flex flex-shrink-0 flex-col items-center justify-center pb-1 text-sm whitespace-nowrap transition-all ${
-                                                isActive
+                                            className={`group relative flex flex-shrink-0 flex-col items-center justify-center pb-1 text-sm whitespace-nowrap transition-all ${isActive
                                                     ? 'font-bold text-primary dark:text-teal-400'
                                                     : 'font-medium text-slate-500 dark:text-slate-400'
-                                            }`}
+                                                }`}
                                         >
                                             <span className="flex items-center gap-1.5">
                                                 {category.name}
                                                 <span
-                                                    className={`flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] ${
-                                                        isActive
+                                                    className={`flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] ${isActive
                                                             ? 'bg-primary/10 text-primary dark:bg-teal-400/10 dark:text-teal-400'
                                                             : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {category.product_count}
                                                 </span>
@@ -886,11 +882,10 @@ export default function CashierIndex({
                                                     type: option.id,
                                                 }))
                                             }
-                                            className={`flex-1 rounded-lg px-3 py-1.5 font-medium transition ${
-                                                isActive
+                                            className={`flex-1 rounded-lg px-3 py-1.5 font-medium transition ${isActive
                                                     ? 'bg-white text-primary shadow-sm dark:bg-slate-900 dark:text-teal-300'
                                                     : 'text-slate-500 hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
-                                            }`}
+                                                }`}
                                         >
                                             {option.label}
                                         </button>
@@ -1266,53 +1261,53 @@ export default function CashierIndex({
                                             saved.orders,
                                         )
                                             ? saved.orders.reduce(
-                                                  (sum, order) =>
-                                                      sum +
-                                                      (Number(order.quantity) ||
-                                                          0),
-                                                  0,
-                                              )
+                                                (sum, order) =>
+                                                    sum +
+                                                    (Number(order.quantity) ||
+                                                        0),
+                                                0,
+                                            )
                                             : 0;
                                         const subtotalSaved = Array.isArray(
                                             saved.orders,
                                         )
                                             ? saved.orders.reduce(
-                                                  (sum, order) =>
-                                                      sum +
-                                                      (Number(order.price) ||
-                                                          0) *
-                                                          (Number(
-                                                              order.quantity,
-                                                          ) || 0),
-                                                  0,
-                                              )
+                                                (sum, order) =>
+                                                    sum +
+                                                    (Number(order.price) ||
+                                                        0) *
+                                                    (Number(
+                                                        order.quantity,
+                                                    ) || 0),
+                                                0,
+                                            )
                                             : 0;
                                         const discountValue =
                                             saved.discount &&
-                                            saved.discount.value !== undefined
+                                                saved.discount.value !== undefined
                                                 ? Number(
-                                                      saved.discount.value,
-                                                  ) || 0
+                                                    saved.discount.value,
+                                                ) || 0
                                                 : 0;
                                         const discountLabel =
                                             discountValue > 0
                                                 ? saved.discount &&
-                                                  saved.discount.type ===
-                                                      'percent'
+                                                    saved.discount.type ===
+                                                    'percent'
                                                     ? `${discountValue}%`
                                                     : formatCurrency(
-                                                          discountValue,
-                                                      )
+                                                        discountValue,
+                                                    )
                                                 : null;
                                         const savedAtLabel = saved.savedAt
                                             ? new Date(
-                                                  saved.savedAt,
-                                              ).toLocaleString('id-ID', {
-                                                  day: '2-digit',
-                                                  month: 'short',
-                                                  hour: '2-digit',
-                                                  minute: '2-digit',
-                                              })
+                                                saved.savedAt,
+                                            ).toLocaleString('id-ID', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                hour: '2-digit',
+                                                minute: '2-digit',
+                                            })
                                             : 'Waktu tidak diketahui';
 
                                         return (

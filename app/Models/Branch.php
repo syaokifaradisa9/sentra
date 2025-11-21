@@ -38,4 +38,9 @@ class Branch extends Model
         return $this->belongsToMany(User::class, 'branch_employee')
             ->withTimestamps();
     }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'category_branches');
+    }
 }
