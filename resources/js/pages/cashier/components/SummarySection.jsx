@@ -26,7 +26,7 @@ export default function SummarySection({
     return (
         <div className="flex h-full min-h-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-slate-900/50">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
+            <div className="hidden lg:flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-teal-500/10 dark:text-teal-400">
                         <Receipt className="h-5 w-5" />
@@ -67,7 +67,7 @@ export default function SummarySection({
                             {orders.map((order) => (
                                 <div
                                     key={order.id}
-                                    className="group relative flex gap-3 rounded-xl border border-slate-100 bg-white p-3 shadow-sm transition-all hover:border-primary/30 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-teal-500/30"
+                                    className="group relative flex gap-3 rounded-xl bg-white p-3 shadow-sm transition-all hover:shadow-md dark:bg-slate-800/50"
                                 >
                                     <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
                                         {order.photo_url ? (
@@ -133,7 +133,7 @@ export default function SummarySection({
             <div className="border-t border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                 {/* Branch Selection */}
                 {canSelectBranch && branchOptions.length > 0 && (
-                    <div className="mb-4">
+                    <div className="mb-4 hidden lg:block">
                         <select
                             value={selectedBranchId ?? ''}
                             onChange={onBranchChange}
@@ -176,8 +176,8 @@ export default function SummarySection({
                     </button>
 
                     <div className="mt-2 flex items-center justify-between border-t border-dashed border-slate-200 pt-3 dark:border-slate-700">
-                        <span className="text-base font-bold text-slate-800 dark:text-slate-100">Total</span>
-                        <span className="text-xl font-bold text-primary dark:text-teal-400">
+                        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Total</span>
+                        <span className="text-lg font-bold text-primary dark:text-teal-400">
                             {formatCurrency(total)}
                         </span>
                     </div>
@@ -189,9 +189,9 @@ export default function SummarySection({
                         type="button"
                         disabled={orders.length === 0 || disableCheckout}
                         onClick={onCheckout}
-                        className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-primary/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none dark:bg-teal-500 dark:shadow-teal-500/20 dark:hover:bg-teal-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
+                        className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary/90 hover:shadow-primary/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none dark:bg-teal-500 dark:shadow-teal-500/20 dark:hover:bg-teal-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
                     >
-                        <CreditCard className="h-5 w-5" />
+                        <CreditCard className="h-4 w-4" />
                         <span>Proses Pembayaran</span>
                     </button>
 

@@ -9,6 +9,7 @@ import {
     X,
     Menu,
     Check,
+    Receipt,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import CashierLayout from '../../components/layouts/CashierLayout';
@@ -741,43 +742,35 @@ export default function CashierIndex({
                             </div>
                         </div>
 
-                        {/* Mobile Order Summary Bottom Sheet */}
+                        {/* Mobile Order Summary Full Page Modal */}
                         {showBottomSheet && (
                             <div className="fixed inset-0 z-50 lg:hidden">
                                 <div
-                                    className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-                                    onClick={() => {
-                                        setIsSummaryOpen(false);
-                                        setTimeout(
-                                            () => setShowBottomSheet(false),
-                                            300,
-                                        );
-                                    }}
-                                ></div>
-                                <div
-                                    className={`absolute right-0 bottom-0 left-0 flex h-[85vh] flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-slate-900 ${isSummaryOpen ? 'translate-y-0' : 'translate-y-full'}`}
+                                    className={`flex h-full flex-col bg-white transition-transform duration-300 ease-out dark:bg-slate-900 ${isSummaryOpen ? 'translate-y-0' : 'translate-y-full'}`}
                                 >
-                                    <div className="mx-auto my-3 h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700"></div>
-                                    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-2 dark:border-slate-800">
-                                        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                                            Detail Pesanan
-                                        </h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsSummaryOpen(false);
-                                                setTimeout(
-                                                    () =>
-                                                        setShowBottomSheet(
-                                                            false,
-                                                        ),
-                                                    300,
-                                                );
-                                            }}
-                                            className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                                        >
-                                            <X className="h-6 w-6" />
-                                        </button>
+                                    {/* Header - Android App Bar Style */}
+                                    <div className="sticky top-0 z-10 flex items-center gap-3 bg-white shadow-sm dark:bg-slate-900">
+                                        <div className="flex w-full items-center gap-3 px-3 py-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsSummaryOpen(false);
+                                                    setTimeout(
+                                                        () =>
+                                                            setShowBottomSheet(
+                                                                false,
+                                                            ),
+                                                        300,
+                                                    );
+                                                }}
+                                                className="flex h-9 w-9 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                            >
+                                                <X className="h-5 w-5" />
+                                            </button>
+                                            <h3 className="flex-1 text-base font-bold text-slate-800 dark:text-slate-100">
+                                                Ringkasan Pesanan
+                                            </h3>
+                                        </div>
                                     </div>
                                     <div className="flex-1 overflow-hidden p-4">
                                         <SummarySection
