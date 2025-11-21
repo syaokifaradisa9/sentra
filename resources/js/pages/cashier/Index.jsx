@@ -7,6 +7,8 @@ import {
     Save,
     Trash2,
     X,
+    Menu,
+    Check,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import CashierLayout from '../../components/layouts/CashierLayout';
@@ -73,6 +75,7 @@ export default function CashierIndex({
             ? 'dark'
             : 'light';
     });
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
     const [branchFilter, setBranchFilter] = useState(
         selectedBranchId
             ? String(selectedBranchId)
@@ -95,8 +98,10 @@ export default function CashierIndex({
         setOrderFeedback(null);
     }, [selectedBranchId, canSelectBranch]);
 
-    const handleBranchChange = (event) => {
-        const { value } = event.target;
+    const handleBranchChange = (eventOrValue) => {
+        const value = typeof eventOrValue === 'object' && eventOrValue?.target
+            ? eventOrValue.target.value
+            : eventOrValue;
         setBranchFilter(value);
         router.get(
             '/cashier',
@@ -598,8 +603,8 @@ export default function CashierIndex({
                         aria-pressed={isActive}
                         aria-label={`Tampilkan produk sebagai ${label.toLowerCase()}`}
                         className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 transition ${isActive
-                                ? 'bg-primary text-white shadow-sm'
-                                : 'text-slate-500 hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
+                            ? 'bg-primary text-white shadow-sm'
+                            : 'text-slate-500 hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
                             }`}
                         title={`Tampilan ${label}`}
                     >
@@ -622,11 +627,11 @@ export default function CashierIndex({
                         }}
                     />
 
-                    <div className="relative z-10 mx-auto flex h-full w-full max-w-[1920px] flex-1 flex-col overflow-hidden p-2 sm:p-3 lg:p-4">
+                    <div className="relative z-10 mx-auto flex h-full w-full max-w-[1920px] flex-1 flex-col overflow-hidden sm:p-3 lg:p-4">
                         <div
-                            className={`grid flex-1 gap-4 min-h-0 overflow-hidden pb-20 lg:grid-rows-[minmax(0,1fr)] ${isCategoryCollapsed
-                                    ? 'lg:grid-cols-[4rem_minmax(0,1fr)_22rem]'
-                                    : 'lg:grid-cols-[17rem_minmax(0,1fr)_22rem]'
+                            className={`grid flex-1 gap-4 min-h-0 overflow-hidden lg:grid-rows-[minmax(0,1fr)] ${isCategoryCollapsed
+                                ? 'lg:grid-cols-[4rem_minmax(0,1fr)_22rem]'
+                                : 'lg:grid-cols-[17rem_minmax(0,1fr)_22rem]'
                                 } transition-all duration-300 ease-in-out lg:pb-0`}
                         >
                             <aside className="hidden h-full min-h-0 flex-col lg:flex">
@@ -697,51 +702,18 @@ export default function CashierIndex({
                         </div>
 
                         {/* Mobile Fixed Total Price Button & Categories */}
-                        <div className="fixed right-0 bottom-0 left-0 z-30 flex flex-col gap-2 border-t border-slate-200 bg-white/95 pt-2 pb-3 backdrop-blur-md lg:hidden dark:border-slate-800 dark:bg-slate-900/95">
-                            {/* Mobile Category Tabs */}
-                            <div className="scrollbar-hide flex w-full gap-6 overflow-x-auto px-6 pb-2">
-                                {[
-                                    {
-                                        id: 'all',
-                                        name: 'Semua',
-                                        product_count: totalProducts,
-                                    },
-                                    ...categories,
-                                ].map((category) => {
-                                    const isActive =
-                                        String(selectedCategory) ===
-                                        String(category.id);
-                                    return (
-                                        <button
-                                            key={category.id}
-                                            onClick={() =>
-                                                setSelectedCategory(category.id)
-                                            }
-                                            className={`group relative flex flex-shrink-0 flex-col items-center justify-center pb-1 text-sm whitespace-nowrap transition-all ${isActive
-                                                    ? 'font-bold text-primary dark:text-teal-400'
-                                                    : 'font-medium text-slate-500 dark:text-slate-400'
-                                                }`}
-                                        >
-                                            <span className="flex items-center gap-1.5">
-                                                {category.name}
-                                                <span
-                                                    className={`flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] ${isActive
-                                                            ? 'bg-primary/10 text-primary dark:bg-teal-400/10 dark:text-teal-400'
-                                                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
-                                                        }`}
-                                                >
-                                                    {category.product_count}
-                                                </span>
-                                            </span>
-                                            {isActive && (
-                                                <span className="absolute -bottom-2 h-0.5 w-full rounded-t-full bg-primary dark:bg-teal-400" />
-                                            )}
-                                        </button>
-                                    );
-                                })}
+                        <div className="fixed right-0 bottom-0 left-0 z-30 flex flex-col gap-2 pb-4 lg:hidden pointer-events-none">
+                            <div className="flex justify-center pointer-events-auto">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCategoryModalOpen(true)}
+                                    className="group flex items-center gap-2.5 rounded-full bg-white/80 px-5 py-2.5 text-sm font-bold text-slate-700 shadow-xl shadow-slate-200/40 backdrop-blur-md ring-1 ring-slate-200/50 transition-all active:scale-95 dark:bg-slate-800/80 dark:text-slate-100 dark:shadow-slate-900/40 dark:ring-slate-700/50"
+                                >
+                                    <Menu className="h-4 w-4 text-primary transition-transform group-hover:rotate-180 dark:text-teal-400" />
+                                    <span>Kategori</span>
+                                </button>
                             </div>
-
-                            <div className="px-3">
+                            <div className="px-4 pointer-events-auto">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -751,7 +723,7 @@ export default function CashierIndex({
                                             50,
                                         );
                                     }}
-                                    className="flex w-full items-center justify-between rounded-2xl bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all active:scale-[0.98] dark:bg-teal-500 dark:shadow-teal-500/20"
+                                    className="flex w-full items-center justify-between rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all active:scale-[0.98] dark:bg-teal-500 dark:shadow-teal-500/20"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs">
@@ -883,8 +855,8 @@ export default function CashierIndex({
                                                 }))
                                             }
                                             className={`flex-1 rounded-lg px-3 py-1.5 font-medium transition ${isActive
-                                                    ? 'bg-white text-primary shadow-sm dark:bg-slate-900 dark:text-teal-300'
-                                                    : 'text-slate-500 hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
+                                                ? 'bg-white text-primary shadow-sm dark:bg-slate-900 dark:text-teal-300'
+                                                : 'text-slate-500 hover:text-primary dark:text-slate-300 dark:hover:text-teal-300'
                                                 }`}
                                         >
                                             {option.label}
@@ -1365,6 +1337,66 @@ export default function CashierIndex({
                                     })}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+            {isCategoryModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center bg-slate-900/60 backdrop-blur-sm lg:hidden">
+                    <div className="w-full max-w-md transform overflow-hidden rounded-t-3xl bg-white shadow-2xl transition-all sm:rounded-3xl dark:bg-slate-900">
+                        {/* Drag Handle */}
+                        <div className="flex justify-center pt-3 pb-1 sm:hidden">
+                            <div className="h-1.5 w-12 rounded-full bg-slate-200 dark:bg-slate-700" />
+                        </div>
+
+                        <div className="flex items-center justify-between px-6 py-4">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                                Pilih Kategori
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsCategoryModalOpen(false)}
+                                className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="max-h-[60vh] overflow-y-auto px-4 pb-8">
+                            <div className="grid gap-2">
+                                {categoryOptions.map((category) => {
+                                    const isActive =
+                                        String(selectedCategory) ===
+                                        String(category.id);
+                                    return (
+                                        <button
+                                            key={category.id}
+                                            onClick={() => {
+                                                setSelectedCategory(category.id);
+                                                setIsCategoryModalOpen(false);
+                                            }}
+                                            className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${isActive
+                                                ? 'border-primary bg-primary/5 shadow-sm dark:border-teal-500 dark:bg-teal-500/10'
+                                                : 'border-transparent bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800'
+                                                }`}
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className={`text-sm font-bold ${isActive ? 'text-primary dark:text-teal-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                                                    {category.name}
+                                                </span>
+                                                <span className="text-xs font-medium text-slate-400">
+                                                    {category.product_count} produk
+                                                </span>
+                                            </div>
+                                            {isActive && (
+                                                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white dark:bg-teal-500 dark:text-slate-900">
+                                                    <Check className="h-3 w-3" strokeWidth={3} />
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
